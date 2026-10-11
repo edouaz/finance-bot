@@ -41,3 +41,14 @@ For an immediate foreground test instead of persistent service activation:
 Keep the SSH terminal open for this foreground test. After startup, retry the connector from a fresh ChatGPT conversation. If only two tools remain despite a healthy tunnel, refresh the existing connector's discovery using the available UI; investigate stale sessions before recreating anything. Verify get_accounts, get_data_coverage and get_weekly_report. Remote discovery is not yet confirmed.
 
 Source: https://developers.openai.com/api/docs/guides/secure-mcp-tunnels . Installed tunnel-client 0.0.16 help confirms file:/path credential references and local health probes.
+
+## Installed client compatibility and credential confusion
+
+The installed 0.0.16 client resolves YAML environment references before flag overrides. The launcher now supplies the legacy environment reference from the protected key file as well as the explicit file reference. No tunnel/profile identity change. A saved tunnel identifier is not a runtime API credential: metadata/poll requests return 401 Unauthorized. Configuration now rejects tunnel_ identifiers and masked values. To correct only the local saved value:
+
+```sh
+./scripts/run_tunnel.sh configure --replace
+sudo systemctl restart finance-tunnel.service
+```
+
+Use a secret API key from https://platform.openai.com/settings/organization/api-keys, typically beginning sk-, with appropriate access to the existing tunnel organization. This does not recreate the tunnel or revoke keys. A newly created API key must be recorded privately at creation. The masked interactive prompt does not expose it in shell history.
