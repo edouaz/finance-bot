@@ -1,0 +1,21 @@
+[Unit]
+Description=Private finance MCP tunnel
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=edouard
+Group=edouard
+WorkingDirectory=/home/edouard/finance-bot
+EnvironmentFile=/home/edouard/.config/finance-tracker/environment
+ExecStart=/home/edouard/.local/bin/tunnel-client run --profile finance-bot
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/edouard/.local/share/finance-tracker
+[Install]
+WantedBy=multi-user.target

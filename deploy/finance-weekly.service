@@ -1,0 +1,15 @@
+[Unit]
+Description=Generate encrypted local weekly finance report
+[Service]
+Type=oneshot
+User=edouard
+Group=edouard
+WorkingDirectory=/home/edouard/finance-bot
+EnvironmentFile=/home/edouard/.config/finance-tracker/environment
+ExecStart=/home/edouard/finance-bot/scripts/weekly.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/edouard/.local/share/finance-tracker
