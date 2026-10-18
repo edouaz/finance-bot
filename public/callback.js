@@ -8,13 +8,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('status');
   if (params.has('code') && params.has('state')) {
     output.value = original;
-    status.textContent = 'Autorisation reçue. Copiez cette URL dans la commande finish sur votre VPS. Ne la partagez pas dans un chat.';
+    status.textContent = 'Authorization received. Copy this URL into the finish command on your server. Do not share it in a chat.';
   } else {
     output.hidden = true;
-    status.textContent = 'Aucune autorisation utilisable reçue. Relancez la connexion depuis votre VPS.';
+    status.textContent = 'No usable authorization received. Restart the connection from your server.';
   }
   document.getElementById('clear').addEventListener('click', () => {
     output.value = ''; output.hidden = true;
-    status.textContent = 'Informations effacées de la page. Vous pouvez fermer cet onglet.';
+    status.textContent = 'Information cleared from the page. You can close this tab.';
   });
 });

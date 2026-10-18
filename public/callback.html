@@ -1,1 +1,24 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'"><link rel="stylesheet" href="style.css"><title>Retour d’autorisation bancaire</title><script src="callback.js"></script></head><body><header><nav aria-label="Navigation"><a href="index.html">Personal Finance Tracker</a><a href="privacy.html">Confidentialité</a><a href="terms.html">Conditions</a></nav></header><main><h1>Retour d’autorisation</h1><p id="status" role="status">Traitement local du retour bancaire…</p><label for="callback">URL à saisir uniquement dans votre terminal VPS</label><textarea id="callback" readonly autocomplete="off" spellcheck="false"></textarea><p><button id="clear" type="button">Effacer les informations de la page</button></p><p>Aucune information n’est envoyée par cette page. L’URL initiale peut toutefois apparaître dans les journaux de l’hébergeur. Une migration vers un callback HTTPS contrôlé sur le VPS reste à préparer.</p><noscript>JavaScript est nécessaire pour retirer les paramètres sensibles de la barre d’adresse. Fermez cet onglet et relancez depuis un navigateur configuré.</noscript></main><footer>Projet personnel privé · Accès bancaire en lecture seule</footer></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'">
+  <meta name="description" content="A self-hosted finance MCP server for ChatGPT. Explore bank accounts, spending and recurring payments with read-only tools and encrypted local storage.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Bank authorization — Finance Tracker</title>
+<script src="callback.js"></script>
+</head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header><nav aria-label="Main navigation">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">f.</span>finance tracker<span class="project-label"> / personal project</span></a>
+  <div class="nav-links"><a href="index.html#how-it-works">How it works</a><a href="installation.html">Setup guide <span aria-hidden="true">↗</span></a></div>
+</nav></header><main id="main" class="document"><a class="back-link" href="index.html">← Back to the project</a><h1>Bank authorization</h1>
+<p id="status" role="status">Processing the bank callback locally…</p>
+<label for="callback">Callback URL — paste only into your server’s terminal</label><textarea id="callback" readonly autocomplete="off" spellcheck="false"></textarea>
+<p><button id="clear" type="button">Clear information from this page</button></p>
+<p>This page sends no information. The initial URL may still appear in the hosting provider’s logs. A migration to a controlled HTTPS callback on the server remains to be prepared.</p>
+<noscript>JavaScript is required to remove sensitive parameters from the address bar. Close this tab and restart authorization in a browser with JavaScript enabled.</noscript></main><footer><a class="brand" href="index.html">finance tracker<span aria-hidden="true">.</span></a><p>A little more clarity, at your own pace.</p><div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a></div></footer></body>
+</html>
