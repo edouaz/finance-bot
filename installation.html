@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'">
+  <meta name="description" content="A self-hosted finance MCP server for ChatGPT. Explore bank accounts, spending and recurring payments with read-only tools and encrypted local storage.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Installation guide — Finance Tracker</title>
+</head><body><a class="skip" href="#main">Skip to content</a>
+<header>
+<nav aria-label="Main navigation">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">f.</span>finance tracker<span class="project-label"> / personal project</span></a>
+  <div class="nav-links"><a href="index.html#how-it-works">How it works</a><a href="installation.html" aria-current="page">Setup guide <span aria-hidden="true">↗</span></a>
+</div>
+</nav>
+</header>
+<main id="main" class="guide">
+<header class="guide-heading"><a class="back-link" href="index.html">← Back to the project</a>
+<p class="eyebrow">Installation guide</p>
+<h1>From your server<br>to ChatGPT.</h1>
+<p>Set up your own finance MCP server, connect your bank and bring read-only financial tools into ChatGPT.</p>
+</header>
+<div class="guide-layout">
+<aside class="guide-toc">
+<nav aria-label="On this page">
+<p>On this page</p><a href="#requirements">Before you start</a><a href="#install">Install</a><a href="#bank">Bank application</a><a href="#storage">Encrypted storage</a><a href="#consent">Authorize & sync</a><a href="#tunnel">Private tunnel</a><a href="#chatgpt">Connect ChatGPT</a><a href="#persistent">Linux service</a><a href="#troubleshooting">Troubleshooting</a><a href="#maintenance">Maintenance</a>
+</nav>
+</aside>
+<article class="guide-content">
+<section id="requirements" class="guide-section">
+<h2>01 / Before you start</h2>
+<p>This guide creates your own private installation. You need Python 3.10+, Git, a Linux or macOS shell, and an Enable Banking application with access to the banks you want to connect. Linux is required for the optional systemd service.</p>
+<p>The project supports BNP Paribas Fortis Belgium and Revolut Belgium. Confirm provider access before using real accounts. Each installation needs its own application ID, RSA key and registered HTTPS callback.</p>
+<div class="guide-note"><strong>Python first.</strong> This repository does not include a Docker image or Compose configuration. The supported path here is a Python virtual environment on your computer or VPS.</div>
+<p>For ChatGPT, you also need access to custom MCP connections and a permitted OpenAI tunnel. Bank consent and OpenAI tunnel credentials are separate. An existing installation should preserve its database, encryption key, tunnel and bank sessions.</p>
+</section>
+<section id="install" class="guide-section">
+<h2>02 / Install the server</h2>
+<p>Use <code>~/finance-bot</code>: the historical bank authorization script expects this location. If you fork the repository, replace the clone URL with your fork.</p>
+<pre><code>git clone https://github.com/edouaz/finance-bot.git &quot;$HOME/finance-bot&quot;
+cd &quot;$HOME/finance-bot&quot;
+./scripts/install.sh</code>
+</pre>
+<p>The installer creates <code>.venv</code>, installs <code>requirements.lock</code> and runs offline tests. On Debian/Ubuntu, install <code>python3-venv</code> if your system cannot create a virtual environment. These tests use synthetic data and do not contact your banks.</p>
+</section>
+<section id="bank" class="guide-section">
+<h2>03 / Configure your bank application</h2>
+<p>Register an application with Enable Banking and obtain the matching RSA private key. Host the contents of <code>public/</code> on your own HTTPS website, including <code>callback.html</code>, <code>callback.js</code> and the stylesheet. Register your exact callback URL with the provider. For a Pages fork, it may look like <code>https://YOUR_ACCOUNT.github.io/finance-bot/callback.html</code>.</p>
+<p>Edit these constants in your local <code>bank_auth.py</code> before authorization:</p>
+<dl>
+<dt><code>APP_ID</code>
+</dt>
+<dd>Your own Enable Banking application ID.</dd>
+<dt><code>REDIRECT_URL</code>
+</dt>
+<dd>Your registered HTTPS callback, with the exact same scheme, host and path.</dd>
+</dl>
+<p>This historical script does not read these values from the environment. Use the same application ID in the v2 environment in the next step.</p>
+<pre><code>mkdir -p keys data
+chmod 700 keys data
+# Copy your application&#x27;s RSA private key to keys/private.pem first.
+chmod 600 keys/private.pem</code>
+</pre>
+<p>Never use the original owner’s application ID or callback for your own application. The static callback removes the query from the address bar, but the host can still log the initial URL. Do not publish keys, sessions or callback URLs containing authorization codes.</p>
+</section>
+<section id="storage" class="guide-section">
+<h2>04 / Create encrypted local storage</h2>
+<p>For a <strong>new installation only</strong>, create a separate encryption key and a protected environment file. Do not replace a key or environment file used by an existing installation.</p>
+<pre><code>mkdir -p &quot;$HOME/.config/finance-tracker&quot; &quot;$HOME/.local/share/finance-tracker&quot;
+chmod 700 &quot;$HOME/.config/finance-tracker&quot; &quot;$HOME/.local/share/finance-tracker&quot;
+.venv/bin/python -m finance.cli init-key &quot;$HOME/.config/finance-tracker/data.key&quot;
+(umask 077; cp .env.example &quot;$HOME/.config/finance-tracker/environment&quot;)
+chmod 600 &quot;$HOME/.config/finance-tracker/environment&quot;</code>
+</pre>
+<p>Edit <code>~/.config/finance-tracker/environment</code>. Replace every example with your own absolute path and application ID:</p>
+<pre><code>ENABLE_BANKING_APP_ID=your-application-id
+ENABLE_BANKING_KEY=/absolute/path/to/finance-bot/keys/private.pem
+FINANCE_SESSIONS=/absolute/path/to/finance-bot/data
+FINANCE_STORAGE=/absolute/path/outside-the-repository/finance-tracker
+FINANCE_DATA_KEY=/absolute/path/to/data.key</code>
+</pre>
+<p>Do not use <code>~</code> or <code>$HOME</code> inside this file. Keep the database and encryption key outside the repository. Keep a protected offline copy of the encryption key: losing it means losing access to encrypted history.</p>
+<p>The CLI and <code>finance_mcp.py</code> load this protected file. A repository-root <code>.env</code> is not loaded automatically; already exported process variables take precedence.</p>
+</section>
+<section id="consent" class="guide-section">
+<h2>05 / Authorize and sync a bank</h2>
+<p>Start authorization, open the printed URL privately and follow the bank consent flow.</p>
+<pre><code>.venv/bin/python bank_auth.py start bnp</code>
+</pre>
+<p>On the callback page, copy the URL from the field. Return to your terminal, run the command below, then paste into its masked prompt. Never paste the URL into ChatGPT or an issue.</p>
+<pre><code>.venv/bin/python bank_auth.py finish bnp
+.venv/bin/python -m finance.cli health
+.venv/bin/python -m finance.cli sync --bank bnp --start YYYY-MM-DD --end YYYY-MM-DD</code>
+</pre>
+<p>Replace the dates with a short past interval in ISO format. For Revolut, repeat authorization and synchronization with <code>revolut</code>. Use <code>--bank all</code> only after authorizing both banks. Pending authorization expires after 30 minutes; restart if necessary.</p>
+<p><code>health</code> checks local storage, not your bank or tunnel. Inspect <code>accounts_processed</code>, <code>complete</code> and <code>errors</code> after synchronization. Partial coverage is not a complete bank history.</p>
+</section>
+<section id="tunnel" class="guide-section">
+<h2>06 / Set up the private MCP tunnel</h2>
+<p>Create a tunnel in <a href="https://platform.openai.com/settings/organization/tunnels">Platform tunnel settings</a>, associate your target ChatGPT workspace, and obtain its ID. Creation requires Tunnels Read + Manage; runtime access requires Read + Use. Install the client from the download linked there:</p>
+<pre><code>mkdir -p &quot;$HOME/.local/bin&quot;
+# Replace /path/to/downloaded/tunnel-client with your extracted binary.
+install -m 755 /path/to/downloaded/tunnel-client &quot;$HOME/.local/bin/tunnel-client&quot;
+export PATH=&quot;$HOME/.local/bin:$PATH&quot;
+tunnel-client help quickstart</code>
+</pre>
+<p>Save your runtime API key privately using this project’s masked prompt. A <code>tunnel_…</code> ID is not an API key. Configuration refuses to overwrite an existing saved key.</p>
+<pre><code>.venv/bin/python -m finance.tunnel_runtime configure</code>
+</pre>
+<p>Initialize a new profile with your tunnel ID. Keep the credential out of command arguments; load it from the protected file:</p>
+<pre><code>export CONTROL_PLANE_API_KEY=&quot;$(cat &quot;$HOME/.config/finance-tracker/tunnel-api.key&quot;)&quot;
+tunnel-client init \
+  --sample sample_mcp_stdio_local \
+  --profile finance-bot \
+  --tunnel-id YOUR_TUNNEL_ID \
+  --mcp-command &quot;$HOME/finance-bot/.venv/bin/python $HOME/finance-bot/finance_mcp.py&quot;
+.venv/bin/python -m finance.tunnel_runtime doctor
+.venv/bin/python -m finance.tunnel_runtime run</code>
+</pre>
+<p>Reuse an existing profile instead of initializing it again. The launcher expects <code>~/.local/bin/tunnel-client</code> and profile <code>finance-bot</code>.</p>
+<p>Keep the client running. The connection uses outbound HTTPS; no public banking listener is required. Check your installed client’s help if flags differ. Source: <a href="https://developers.openai.com/api/docs/guides/secure-mcp-tunnels">official OpenAI Secure MCP Tunnel documentation</a>.</p>
+</section>
+<section id="chatgpt" class="guide-section">
+<h2>07 / Connect ChatGPT</h2>
+<p>In <a href="https://chatgpt.com/plugins">ChatGPT Plugins</a>, add a custom MCP server, choose Tunnel and select your tunnel. Workspace permissions still apply. See <a href="https://developers.openai.com/api/docs/guides/secure-mcp-tunnels#connect-from-chatgpt">OpenAI’s connection instructions</a>.</p>
+<p>With the client running, verify tool discovery and try <code>get_accounts</code> and <code>get_data_coverage</code>. Ask which date range is available before requesting a spending summary. The tools read cached data; refresh it using the synchronization command.</p>
+<div class="guide-note"><strong>Check the full path.</strong> Local health alone does not confirm a working ChatGPT connection. Finish by making a successful read-only tool call in ChatGPT. Information returned by tools can include financial data and is subject to your OpenAI account’s settings.</div>
+</section>
+<section id="persistent" class="guide-section">
+<h2>08 / Keep it running on Linux (optional)</h2>
+<p>For a foreground trial, keep your terminal open. For automatic startup, adapt the supplied systemd unit. The existing shell helpers and service contain <code>/home/edouard</code> paths and an <code>edouard</code> user; do not run them unchanged on someone else’s machine.</p>
+<ol>
+<li>Edit <code>scripts/run_tunnel.sh</code> and <code>scripts/activate_tunnel.sh</code> to use your absolute checkout path.</li>
+<li>Edit <code>deploy/finance-tunnel.service</code>: set <code>User</code>, <code>Group</code>, <code>WorkingDirectory</code>, <code>EnvironmentFile</code>, <code>ExecStart</code> and <code>ReadWritePaths</code> for your account and storage path.</li>
+<li>Stop the foreground process before starting the service.</li>
+</ol>
+<pre><code>./scripts/activate_tunnel.sh
+systemctl is-active finance-tunnel.service
+# After editing the unit later:
+sudo systemctl daemon-reload
+sudo systemctl restart finance-tunnel.service</code>
+</pre>
+<p>The activation script uses sudo and enables the system service. Keep only one supervisor for this tunnel. Confirm the client’s configured health port before using a local health probe; keep its admin endpoint private.</p>
+<p>Synchronization is separate from the tunnel. The optional weekly timer and service in <code>deploy/</code> also need their user and paths adapted. Reports stay encrypted locally; scheduling a report does not send a ChatGPT notification.</p>
+</section>
+<section id="troubleshooting" class="guide-section">
+<h2>Troubleshooting</h2>
+<dl>
+<dt><code>application_id_not_configured</code>
+</dt>
+<dd>Check the protected environment file and any exported variable taking precedence.</dd>
+<dt><code>unsafe_*_permissions</code>
+</dt>
+<dd>Use mode 600 for secret files and 700 for their private directories. Do not solve this by making secrets public.</dd>
+<dt>Callback rejected or authorization expired</dt>
+<dd>Check the registered HTTPS URL and constants in <code>bank_auth.py</code>, then restart authorization.</dd>
+<dt><code>authorization_unavailable</code>
+</dt>
+<dd>Check the application, RSA key and provider authorization. This error alone does not prove bank consent expired.</dd>
+<dt>No tools in ChatGPT</dt>
+<dd>Check the running client, profile command, workspace association and tunnel permissions. Refresh tool discovery after fixing the connection.</dd>
+<dt>Wrong API key saved</dt>
+<dd>Run <code>.venv/bin/python -m finance.tunnel_runtime configure --replace</code> privately, then restart the client. This replaces only the local credential file.</dd>
+<dt>Missing or stale transactions</dt>
+<dd>Check bank consent, sync dates, provider history limits and coverage. Run synchronization again as needed.</dd>
+</dl>
+</section>
+<section id="maintenance" class="guide-section">
+<h2>Backups and local development</h2>
+<pre><code>.venv/bin/python -m finance.cli backup /secure/external/path/finance-backup.sqlite3
+./scripts/verify.sh
+python3 -m http.server 8000 --directory public</code>
+</pre>
+<p>The backup destination must be new and outside the repository. Protect the matching encryption key separately. Open <code>http://localhost:8000</code> to preview the website. Run tests through <code>verify.sh</code>: the legacy root-level <code>test_api.py</code> makes a live bank call on import.</p>
+<p>Publish only <code>public/</code> to your static host. For this repository, the live site comes from <code>gh-pages:/</code>; merging source changes into <code>main</code> does not update it. The historical publishing script is owner-specific and refuses an existing repository.</p>
+<p><a href="https://github.com/edouaz/finance-bot/tree/main/docs">Operational documentation on GitHub</a> includes backup recovery and shutdown notes. Some older runbooks describe the original host rather than a new installation.</p>
+</section>
+</article>
+</div>
+</main>
+<footer><a class="brand" href="index.html">finance tracker<span aria-hidden="true">.</span></a>
+<p>A little more clarity, at your own pace.</p>
+<div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a>
+</div>
+</footer></body>
+</html>
