@@ -1,31 +1,21 @@
 # Finance Tracker
 
-**Vos finances, l’esprit plus clair.** Un serveur MCP Python auto-hébergé pour consulter vos comptes et comprendre vos dépenses avec un client compatible MCP, dont ChatGPT via un tunnel configuré séparément.
+**A self-hosted finance MCP server for ChatGPT.** Connect your bank accounts, explore spending and review recurring payments through read-only tools backed by an encrypted local cache.
 
-[Découvrir le projet](https://edouaz.github.io/finance-bot/) · [Outils MCP](docs/MCP_TOOLS.md) · [Architecture](docs/ARCHITECTURE.md) · [Sécurité](docs/SECURITY.md)
+[Website](https://edouaz.github.io/finance-bot/) · **[Installation guide](https://edouaz.github.io/finance-bot/installation.html)** · [MCP tools](docs/MCP_TOOLS.md) · [Security](docs/SECURITY.md)
 
-- **Lecture seule** : aucun paiement ni virement depuis les outils MCP.
-- **Historique local** : données financières dans une base SQLite chiffrée, avec une clé distincte hors du dépôt.
-- **Analyses expliquées** : dépenses, catégories, récurrences et alertes, avec leurs limites de couverture.
-- **Deux banques prévues** : BNP Paribas Fortis Belgique et Revolut Belgique via Enable Banking. Leur disponibilité dépend de votre accès fournisseur.
+- **Run it yourself:** Python on your computer or VPS. No frontend build or Docker setup required.
+- **Store history locally:** encrypted SQLite financial payloads, with a separate encryption key outside the repository.
+- **Connect ChatGPT:** a private Secure MCP Tunnel routes calls to the stdio server. Tools cannot make payments or transfers.
+- **Review estimates:** categories, recurring charges and alerts include context; currencies stay separate and coverage can be incomplete.
 
-Ce dépôt est un projet personnel, pas un service bancaire prêt à l’emploi. Chaque personne doit créer sa propre application Enable Banking et autoriser ses propres comptes. Le site public est une présentation statique, sans connexion bancaire ; son aperçu utilise des données fictives.
-
-## Avant de commencer
-
-Il vous faut :
-
-- Un ordinateur ou VPS avec Python **3.10 ou plus récent**, Git et la possibilité de créer un environnement virtuel. Les exemples ci-dessous utilisent un shell Linux/macOS ; le déploiement systemd nécessite Linux.
-- Une application Enable Banking avec un identifiant, une clé privée RSA associée et une URL de redirection enregistrée. Vérifiez auprès du fournisseur les conditions d’accès et les banques disponibles avant d’utiliser des comptes réels.
-- Un client MCP pour la consultation. Le tunnel vers ChatGPT nécessite sa propre configuration et ses propres autorisations ; installer ce dépôt ne crée pas automatiquement de connecteur ChatGPT.
-
-Vous pouvez tester le code hors ligne sans compte bancaire. Pour une installation existante, suivez plutôt [la procédure de mise à jour](docs/UPDATE_EXISTING_TUNNEL.md) : ne recréez pas la clé de chiffrement.
+The project targets BNP Paribas Fortis Belgium and Revolut Belgium through Enable Banking. Provider access and bank availability depend on your application. This is a personal project, not a hosted banking service or an official bank integration. The website uses fictional data and does not connect to any account.
 
 ## Installation
 
-### 1. Récupérer le projet et vérifier les dépendances
+The [website installation guide](https://edouaz.github.io/finance-bot/installation.html) covers the full path: prerequisites, bank application, callback, encryption, consent, synchronization, tunnel creation, ChatGPT connection and optional Linux service. Its source is [public/installation.html](public/installation.html), which you can also preview locally before publication.
 
-Le script historique d’autorisation attend le dépôt dans `~/finance-bot`. Utilisez ce chemin pour suivre ce guide sans modifier ses chemins.
+Start with Python **3.10+**, Git and a shell on Linux or macOS. You need your own Enable Banking application ID, matching RSA private key and registered HTTPS callback. For ChatGPT, you also need custom MCP access and the appropriate OpenAI tunnel permissions. These are separate from bank consent.
 
 ```sh
 git clone https://github.com/edouaz/finance-bot.git "$HOME/finance-bot"
@@ -33,135 +23,80 @@ cd "$HOME/finance-bot"
 ./scripts/install.sh
 ```
 
-`install.sh` crée `.venv`, installe les versions de `requirements.lock` et lance les vérifications hors ligne. Si `venv` manque sur Debian/Ubuntu, installez le paquet `python3-venv` de votre distribution. En cas d’incompatibilité Python, utilisez une version acceptée par les dépendances verrouillées plutôt que de supprimer le verrouillage.
+The installer creates `.venv`, installs `requirements.lock` and runs offline checks. If virtual environments are unavailable on Debian/Ubuntu, install `python3-venv`. Use a Python version supported by the locked dependencies rather than removing the lock file.
 
-### 2. Configurer votre application bancaire
+Before connecting real accounts:
 
-Dans **votre copie locale** de `bank_auth.py`, remplacez :
+1. Host `public/` on your own HTTPS website. Register its exact `callback.html` URL with Enable Banking.
+2. Set your own `APP_ID` and `REDIRECT_URL` in your local `bank_auth.py`. That historical script expects `~/finance-bot` and does not read these constants from the environment.
+3. Place your application’s RSA key at `keys/private.pem` (mode `600`); protect `keys/` and `data/` with mode `700`.
+4. Create the external encryption key and environment file as shown in the guide. Use absolute paths and your own application ID. **Never replace an encryption key used by an existing database.**
+5. Authorize each desired bank with `bank_auth.py start bnp` and `bank_auth.py finish bnp` using `.venv/bin/python`. Repeat with `revolut` if needed. Paste the callback URL only into the masked terminal prompt.
+6. Check local health and synchronize a short past date range. Configure the private tunnel, then verify a read-only tool call from ChatGPT.
 
-| Valeur | Votre configuration |
-| --- | --- |
-| `APP_ID` | L’identifiant de votre propre application Enable Banking |
-| `REDIRECT_URL` | Votre URL HTTPS, exactement identique à celle enregistrée auprès du fournisseur |
-
-Le script d’autorisation historique ne lit pas ces deux valeurs depuis le fichier d’environnement. Le serveur v2, lui, lit `ENABLE_BANKING_APP_ID` : utilisez le même identifiant des deux côtés.
-
-Placez votre clé privée RSA associée à l’application dans `~/finance-bot/keys/private.pem`, puis protégez-la :
-
-```sh
-mkdir -p keys data
-chmod 700 keys data
-# Copier votre propre clé privée dans keys/private.pem avant la commande suivante.
-chmod 600 keys/private.pem
-```
-
-Pour votre callback, hébergez les fichiers de `public/` sur votre propre site HTTPS en conservant `callback.html` et `callback.js`. En cas de fork GitHub Pages, l’URL ressemble à `https://VOTRE_COMPTE.github.io/finance-bot/callback.html` ; vérifiez qu’elle fonctionne avant de l’enregistrer. Cette page retire les paramètres de la barre d’adresse, mais l’hébergeur peut journaliser l’URL initiale. Ne recopiez pas l’identifiant ou le callback du propriétaire pour votre application.
-
-### 3. Préparer le stockage privé
-
-```sh
-mkdir -p "$HOME/.config/finance-tracker" "$HOME/.local/share/finance-tracker"
-chmod 700 "$HOME/.config/finance-tracker" "$HOME/.local/share/finance-tracker"
-.venv/bin/python -m finance.cli init-key "$HOME/.config/finance-tracker/data.key"
-(umask 077; cp .env.example "$HOME/.config/finance-tracker/environment")
-chmod 600 "$HOME/.config/finance-tracker/environment"
-```
-
-Ces commandes concernent une **installation neuve**. Conservez une copie protégée de la clé hors du serveur : sans elle, les données chiffrées ne sont pas récupérables. Ne remplacez jamais une clé utilisée par une base existante.
-
-Éditez `~/.config/finance-tracker/environment` avec vos valeurs :
+The protected configuration file is `~/.config/finance-tracker/environment` (mode `600`):
 
 ```dotenv
-ENABLE_BANKING_APP_ID=votre-identifiant-application
-ENABLE_BANKING_KEY=/chemin/absolu/vers/finance-bot/keys/private.pem
-FINANCE_SESSIONS=/chemin/absolu/vers/finance-bot/data
-FINANCE_STORAGE=/chemin/absolu/hors-du-depot/finance-tracker
-FINANCE_DATA_KEY=/chemin/absolu/vers/data.key
+ENABLE_BANKING_APP_ID=your-application-id
+ENABLE_BANKING_KEY=/absolute/path/to/finance-bot/keys/private.pem
+FINANCE_SESSIONS=/absolute/path/to/finance-bot/data
+FINANCE_STORAGE=/absolute/path/outside-the-repository/finance-tracker
+FINANCE_DATA_KEY=/absolute/path/to/data.key
 ```
 
-Utilisez des **chemins absolus**, sans `$HOME` ni `~` dans ce fichier. La base et la clé de chiffrement doivent rester hors du dépôt. Les commandes `finance.cli` et l’entrée `finance_mcp.py` chargent ce fichier protégé ; un `.env` à la racine n’est pas chargé automatiquement. Les variables déjà exportées dans le processus ont priorité.
-
-### 4. Autoriser vos comptes
-
-```sh
-.venv/bin/python bank_auth.py start bnp
-```
-
-Ouvrez l’URL affichée dans votre navigateur et suivez le consentement bancaire. Sur la page de retour, copiez l’URL depuis le champ prévu, puis lancez :
-
-```sh
-.venv/bin/python bank_auth.py finish bnp
-```
-
-Collez l’URL dans l’invite masquée du terminal. Ne la partagez pas dans un chat, une issue ou une capture d’écran. La commande vérifie le callback et le `state` ; l’autorisation en attente expire après 30 minutes. Pour Revolut, répétez avec `revolut` à la place de `bnp`. Autorisez uniquement les banques que vous souhaitez utiliser.
-
-### 5. Vérifier et synchroniser
+Use the same application ID in `bank_auth.py` and this file. Do not use `$HOME` or `~` inside it. Keep the database and encryption key outside the repository. The CLI and `finance_mcp.py` load this file; a repository-root `.env` is not automatically loaded. Already exported process variables take precedence.
 
 ```sh
 .venv/bin/python -m finance.cli health
-.venv/bin/python -m finance.cli sync --bank bnp --start AAAA-MM-JJ --end AAAA-MM-JJ
+.venv/bin/python -m finance.cli sync --bank bnp --start YYYY-MM-DD --end YYYY-MM-DD
 ```
 
-Remplacez les deux dates par une petite période passée au format ISO, par exemple une semaine. Utilisez `--bank revolut` pour Revolut ; `--bank all` seulement après avoir autorisé les deux banques.
+Replace the dates with a short past interval in ISO format. Use `--bank revolut` for Revolut; `--bank all` only after authorizing both banks. `health` checks local storage, not the bank or tunnel. Check `complete`, `errors` and data coverage before relying on totals.
 
-`health` vérifie le stockage local, pas la banque ni le tunnel. La synchronisation résume `accounts_processed`, `complete` et `errors` sans afficher les transactions. Une synchronisation partielle ne garantit pas un historique complet : examinez la couverture avant d’interpréter les totaux.
+## Connecting an MCP client
 
-### 6. Brancher un client MCP
-
-Pour un client acceptant un serveur local en **stdio**, adaptez ce bloc à son format de configuration et remplacez les chemins :
+For a client supporting local stdio servers, adapt this example to its configuration format:
 
 ```json
 {
   "mcpServers": {
     "finance-tracker": {
-      "command": "/chemin/absolu/vers/finance-bot/.venv/bin/python",
-      "args": ["/chemin/absolu/vers/finance-bot/finance_mcp.py"]
+      "command": "/absolute/path/to/finance-bot/.venv/bin/python",
+      "args": ["/absolute/path/to/finance-bot/finance_mcp.py"]
     }
   }
 }
 ```
 
-L’entrée `finance_mcp.py` charge l’environnement protégé, puis lance la v2. Le processus attend des messages MCP : l’absence d’affichage dans un terminal est normale. Les outils consultent le cache ; synchronisez avec la CLI pour actualiser les données.
+The stable entrypoint loads the protected environment and starts v2. It waits for MCP input, so an idle terminal is expected. Tools query the cache; use the CLI to refresh it.
 
-Pour ChatGPT via un tunnel privé, consultez [le déploiement](docs/DEPLOYMENT.md) et [la récupération du tunnel](docs/TUNNEL_RECOVERY.md). Ces documents contiennent aussi des informations propres au serveur d’origine : adaptez chemins, utilisateur et profil. Ne publiez jamais le serveur bancaire comme une API anonyme. Des informations financières retournées par MCP peuvent être transmises au fournisseur du client utilisé.
+For ChatGPT, follow [the tunnel instructions](https://edouaz.github.io/finance-bot/installation.html#tunnel), based on [official OpenAI documentation](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels). The project launcher expects `~/.local/bin/tunnel-client` and profile `finance-bot`. The existing shell helpers and systemd templates contain the original owner’s paths and user; adapt them before use. Keep the bank server private. Financial information returned to ChatGPT is subject to your OpenAI account’s data settings.
 
-## Dépannage
-
-| Symptôme | À vérifier |
-| --- | --- |
-| `application_id_not_configured` | Identifiant dans le fichier `environment`, ou variable exportée prioritaire |
-| `unsafe_environment_permissions`, `unsafe_key_permissions`, `unsafe_session_permissions` | Permissions `600` du fichier concerné ; ne rendez pas les secrets accessibles à tous |
-| `storage_must_be_outside_repository`, `key_must_be_outside_repository` | Emplacement de la base ou de la clé de chiffrement |
-| Session absente, expirée ou `reauthorization_required` | Refaire `start` puis `finish` pour la banque concernée |
-| `authorization_unavailable` | Application, clé et autorisations fournisseur ; ce code ne prouve pas à lui seul une expiration bancaire |
-| Callback refusé | Même URL HTTPS dans `bank_auth.py` et chez le fournisseur, puis nouveau `start` |
-| Aucun résultat / couverture partielle | Consentement, dates, limites d’historique bancaire et dernière synchronisation |
-| Outils absents dans ChatGPT | Diagnostic du tunnel et découverte MCP ; un `health` local réussi ne suffit pas |
-
-## Tests et développement
+## Tests and website preview
 
 ```sh
 ./scripts/verify.sh
-# Prévisualiser uniquement le site statique :
 python3 -m http.server 8000 --directory public
-# Puis ouvrir http://localhost:8000
+# Open http://localhost:8000
 ```
 
-Les tests utilisent des clés générées et des données synthétiques, sans appels bancaires. **Ne lancez pas une découverte de tests à la racine** : le fichier historique `test_api.py` fait un appel réel à l’import. Le script de vérification limite la découverte à `tests/`.
+Tests use generated keys and synthetic data, without bank calls. **Do not discover tests from the repository root:** legacy `test_api.py` makes a live request on import. The verification script restricts discovery to `tests/`.
 
-Le site ne nécessite ni framework frontend, ni compilation, ni service tiers. Les animations CSS respectent `prefers-reduced-motion`. Pour GitHub Pages, publiez uniquement le contenu de `public/` (y compris `favicon.svg`), jamais la racine du projet ni les fichiers de configuration privés. Le script historique `scripts/publish_pages.sh` est réservé au compte d’origine et refuse un dépôt déjà existant ; ce n’est pas une commande de mise à jour ni une procédure générique pour les forks.
+The static site needs no framework, build step or third-party services. CSS animations respect `prefers-reduced-motion`. Publish **only `public/`**, including the installation guide and favicon. Never publish keys, sessions, financial data, backups or the environment file.
 
-## Repères dans le dépôt
+The current live website uses `gh-pages:/`; merging `main` does not update that branch. The historical `scripts/publish_pages.sh` is owner-specific and refuses existing repositories, so it is not an update command or a generic fork deployment tool.
 
-| Chemin | Rôle |
+## Repository map
+
+| Path | Purpose |
 | --- | --- |
-| `finance/` | Accès fournisseur, stockage chiffré, synchronisation et analyses |
-| `finance_mcp.py` / `finance_mcp_v2.py` | Entrée stable / outils MCP en lecture seule |
-| `bank_auth.py` | Autorisation bancaire, côté opérateur |
-| `public/` | Présentation, confidentialité, conditions et callback |
-| `tests/` | Tests synthétiques et intégration MCP |
-| `deploy/`, `scripts/` | Installation et modèles de services Linux à adapter |
+| `finance/` | Provider access, encrypted storage, synchronization and analysis |
+| `finance_mcp.py` / `finance_mcp_v2.py` | Stable entrypoint / read-only MCP tools |
+| `bank_auth.py` | Operator-only consent management |
+| `public/` | Website, installation guide, policies and bank callback |
+| `tests/` | Synthetic unit and MCP integration checks |
+| `deploy/`, `scripts/` | Installation helpers and Linux service templates to adapt |
 
-[Maintenance et sauvegardes](docs/DEPLOYMENT.md) · [Réautoriser une banque](docs/BANK_REAUTHORIZATION.md) · [Arrêt d’urgence](docs/EMERGENCY_SHUTDOWN.md) · [Audit technique](docs/PROJECT_AUDIT.md)
+[Architecture](docs/ARCHITECTURE.md) · [Maintenance and backups](docs/DEPLOYMENT.md) · [Bank reauthorization](docs/BANK_REAUTHORIZATION.md) · [Tunnel recovery](docs/TUNNEL_RECOVERY.md) · [Emergency shutdown](docs/EMERGENCY_SHUTDOWN.md)
 
-Les devises restent séparées. Catégories, récurrences et alertes sont des heuristiques, pas des conseils financiers. Ne publiez jamais clés, sessions, base, sauvegardes, rapports ou URLs d’autorisation. Avant de proposer une modification, lancez les vérifications hors ligne et utilisez uniquement des exemples fictifs dans les issues et captures.
+Older operational runbooks include details specific to the original host and some French content. For a new installation, start with the English website guide. Keep protected offline copies of your encryption key and necessary credentials; losing the key makes encrypted history unreadable. Estimates are not financial advice. Use fictional examples in issues and screenshots.

@@ -1,41 +1,41 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'">
-  <meta name="description" content="Un assistant personnel en lecture seule pour comprendre ses dépenses. Projet Python MCP auto-hébergé, avec stockage local chiffré après configuration.">
+  <meta name="description" content="A self-hosted finance MCP server for ChatGPT. Explore bank accounts, spending and recurring payments with read-only tools and encrypted local storage.">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <title>Finance Tracker — Vos finances, l’esprit plus clair</title>
+  <title>Finance Tracker — A finance MCP server for ChatGPT</title>
 </head>
-<body><a class="skip" href="#main">Aller au contenu</a>
-<header><nav aria-label="Navigation principale">
-  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">f.</span>finance tracker<span class="project-label"> / projet personnel</span></a>
-  <div class="nav-links"><a href="index.html#fonctionnement">Le projet</a><a href="https://github.com/edouaz/finance-bot#installation">Installer <span aria-hidden="true">↗</span></a></div>
+<body><a class="skip" href="#main">Skip to content</a>
+<header><nav aria-label="Main navigation">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">f.</span>finance tracker<span class="project-label"> / personal project</span></a>
+  <div class="nav-links"><a href="index.html#how-it-works">How it works</a><a href="installation.html">Setup guide <span aria-hidden="true">↗</span></a></div>
 </nav></header><main id="main">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="hero-copy"><p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Vos comptes. Votre installation.</p>
-      <h1 id="hero-title">Vos finances,<br>l’esprit <em>plus clair.</em></h1>
-      <p class="intro">Moins de lignes à parcourir. Plus de choses à comprendre. Un assistant privé pour explorer vos dépenses et vos paiements récurrents avec ChatGPT.</p>
-      <div class="actions"><a class="button" href="https://github.com/edouaz/finance-bot#installation">Créer mon installation <span aria-hidden="true">↗</span></a><a class="text-link" href="#fonctionnement">Découvrir le projet <span aria-hidden="true">↓</span></a></div>
-      <p class="hero-note">Python · MCP · Auto-hébergé · Lecture seule</p>
+    <div class="hero-copy">
+      <h1 id="hero-title">Your finances.<br>A clearer view,<br><em>with ChatGPT.</em></h1>
+      <p class="intro">A self-hosted finance MCP server for ChatGPT. Connect your bank accounts, understand your spending and spot recurring payments through read-only tools.</p>
+      <div class="actions"><a class="button" href="installation.html">Set up my instance <span aria-hidden="true">↗</span></a><a class="text-link" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a></div>
+      <p class="hero-note">Python · MCP · Self-hosted · Read-only</p>
     </div>
-    <figure class="visual" aria-label="Illustration d’une synthèse financière avec des données fictives">
+    <figure class="visual" aria-label="Illustrated financial summary with fictional data">
       <div class="visual-grid" aria-hidden="true"></div><span class="orbit orbit-one" aria-hidden="true"></span><span class="orbit orbit-two" aria-hidden="true"></span>
-      <div class="summary"><div class="summary-top"><span>Votre vue d’ensemble</span><span class="demo">Démo</span></div><p class="balance-label">Solde illustratif</p><p class="balance">2 840<span>,50 €</span></p>
-        <svg class="chart" viewBox="0 0 340 120" role="img" aria-label="Courbe décorative de solde fictif"><path class="chart-guide" d="M0 30H340 M0 65H340 M0 100H340"/><path class="chart-fill" d="M0 100L28 91L56 97L84 72L112 78L140 53L168 64L196 37L224 46L252 24L280 33L310 12L340 18V120H0Z"/><path class="chart-line" d="M0 100L28 91L56 97L84 72L112 78L140 53L168 64L196 37L224 46L252 24L280 33L310 12L340 18"/></svg>
-        <div class="chart-caption"><span>Début du mois</span><span>Aujourd’hui</span></div><div class="transaction"><span class="transaction-icon" aria-hidden="true">↙</span><span>Courses du quotidien<small>Exemple de dépense</small></span><strong>− 48,60 €</strong></div>
-      </div><div class="floating-note"><span class="note-icon" aria-hidden="true">↗</span><span>Un abonnement repéré<small>Une piste à vérifier, pas une certitude.</small></span></div>
-      <figcaption>Illustration · Données fictives · Aucun compte connecté</figcaption>
+      <div class="summary"><div class="summary-top"><span>Your overview</span><span class="demo">Demo</span></div><p class="balance-label">Illustrative balance</p><p class="balance">2,840<span>.50 €</span></p>
+        <svg class="chart" viewBox="0 0 340 120" role="img" aria-label="Decorative chart of a fictional balance"><path class="chart-guide" d="M0 30H340 M0 65H340 M0 100H340"/><path class="chart-fill" d="M0 100L28 91L56 97L84 72L112 78L140 53L168 64L196 37L224 46L252 24L280 33L310 12L340 18V120H0Z"/><path class="chart-line" d="M0 100L28 91L56 97L84 72L112 78L140 53L168 64L196 37L224 46L252 24L280 33L310 12L340 18"/></svg>
+        <div class="chart-caption"><span>Start of month</span><span>Today</span></div><div class="transaction"><span class="transaction-icon" aria-hidden="true">↙</span><span>Everyday groceries<small>Example expense</small></span><strong>− 48.60 €</strong></div>
+      </div><div class="floating-note"><span class="note-icon" aria-hidden="true">↗</span><span>Recurring payment spotted<small>An estimate to review, not a certainty.</small></span></div>
+      <figcaption>Illustration · Fictional data · No connected accounts</figcaption>
     </figure>
   </section>
-  <section class="principles" aria-label="Principes du projet"><p><span aria-hidden="true">↗</span> Vos données, sur votre serveur</p><p><span aria-hidden="true">≋</span> Des analyses expliquées</p><p><span aria-hidden="true">○</span> Aucun paiement ni virement</p></section>
-  <section id="fonctionnement" class="features" aria-labelledby="features-title"><div class="section-heading"><p class="eyebrow">Moins de bruit, plus de recul</p><h2 id="features-title">Comprendre avant<br>de décider.</h2><p>Les faits, les estimations et les limites des données restent distincts. Vous gardez la main.</p></div>
-    <div class="feature-list"><article><span class="number">01</span><div><h3>Une vue sur vos dépenses</h3><p>Consultez vos comptes et transactions depuis un cache local. La couverture et la fraîcheur des synchronisations restent visibles.</p></div></article><article><span class="number">02</span><div><h3>Des habitudes à repérer</h3><p>Explorez les catégories et les paiements récurrents. Chaque estimation est une piste à vérifier avec vos relevés.</p></div></article><article><span class="number">03</span><div><h3>Un accès limité à la lecture</h3><p>Le serveur MCP ne crée aucun paiement. Le stockage financier est chiffré une fois votre installation configurée.</p></div></article></div>
+  <section class="principles" aria-label="Project principles"><p><span aria-hidden="true">↗</span> Your data, on your server</p><p><span aria-hidden="true">≋</span> Estimates with context</p><p><span aria-hidden="true">○</span> No payments or transfers</p></section>
+  <section id="how-it-works" class="features" aria-labelledby="features-title"><div class="section-heading"><p class="eyebrow">From your bank to your conversation</p><h2 id="features-title">Understand first.<br>Decide with context.</h2><p>Three steps, with clear boundaries. Your server stores the history; ChatGPT queries it through read-only MCP tools.</p></div>
+    <div class="feature-list"><article><span class="number">01</span><div><h3>Run it on your machine</h3><p>Install the Python server on your computer or VPS. Configure your own Enable Banking application and authorize your accounts.</p></div></article><article><span class="number">02</span><div><h3>Sync to encrypted storage</h3><p>Sync transactions into a local encrypted database. Keep the encryption key separate and check when your data was last refreshed.</p></div></article><article><span class="number">03</span><div><h3>Ask ChatGPT, in read-only mode</h3><p>Connect through a private MCP tunnel. ChatGPT can query the cached data, with no tools to make payments or move money.</p></div></article></div>
   </section>
-  <section class="setup" aria-labelledby="setup-title"><div><p class="eyebrow">À installer chez vous</p><h2 id="setup-title">Un projet à faire vôtre.</h2><p>Récupérez le code, configurez votre application Enable Banking, puis autorisez vos comptes. Le README vous accompagne à chaque étape.</p><a class="button" href="https://github.com/edouaz/finance-bot#installation">Ouvrir le guide d’installation <span aria-hidden="true">↗</span></a></div><ol class="setup-steps"><li><span>01</span> Préparer Python et le serveur</li><li><span>02</span> Configurer vos clés et consentements</li><li><span>03</span> Synchroniser et connecter un client MCP</li></ol></section>
-  <aside class="disclaimer"><p>Projet personnel indépendant, non affilié à BNP Paribas Fortis, Revolut ou Enable Banking. Ce site présente le projet : il ne connecte aucune banque. L’accès bancaire dépend de votre configuration et des autorisations du fournisseur. Les informations transmises à ChatGPT sont traitées selon les paramètres de votre compte.</p></aside>
-</main><footer><a class="brand" href="index.html">finance tracker<span aria-hidden="true">.</span></a><p>Un peu plus de clarté, à votre rythme.</p><div><a href="privacy.html">Confidentialité</a><a href="terms.html">Conditions</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a></div></footer></body>
+  <section class="setup" aria-labelledby="setup-title"><div><p class="eyebrow">Make it your own</p><h2 id="setup-title">Your instance. Your setup.</h2><p>Follow the installation guide from your first command to a working ChatGPT connection, including bank consent, encrypted storage and tunnel setup.</p><a class="button" href="installation.html">Read the setup guide <span aria-hidden="true">↗</span></a></div><ol class="setup-steps"><li><span>01</span> Install the Python server</li><li><span>02</span> Configure keys and bank consent</li><li><span>03</span> Sync and connect ChatGPT</li></ol></section>
+  <aside class="disclaimer"><p>An independent personal project, not affiliated with BNP Paribas Fortis, Revolut or Enable Banking. This website does not connect to your bank. Bank access depends on your provider permissions and configuration. Financial information returned to ChatGPT is subject to your account’s data settings.</p></aside>
+</main><footer><a class="brand" href="index.html">finance tracker<span aria-hidden="true">.</span></a><p>A little more clarity, at your own pace.</p><div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a></div></footer></body>
 </html>

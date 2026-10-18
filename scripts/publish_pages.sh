@@ -12,7 +12,7 @@ fi
 project_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 publish_dir=$(mktemp -d /tmp/finance-pages.XXXXXX)
 chmod 700 "$publish_dir"
-for file in index.html privacy.html terms.html callback.html callback.js style.css favicon.svg; do
+for file in index.html installation.html privacy.html terms.html callback.html callback.js style.css favicon.svg; do
   cp "$project_root/public/$file" "$publish_dir/$file"
 done
 cd "$publish_dir"
@@ -21,7 +21,7 @@ touch .nojekyll
 git init -b main
 git config user.name "$account"
 git config user.email "$account@users.noreply.github.com"
-git add index.html privacy.html terms.html callback.html callback.js style.css favicon.svg README.md .nojekyll
+git add index.html installation.html privacy.html terms.html callback.html callback.js style.css favicon.svg README.md .nojekyll
 git commit -m 'Publish Personal Finance Tracker static pages'
 # Refuse to modify any existing repository or its history.
 existing=$(gh api "repos/$account/finance-bot" --jq .full_name 2>/dev/null || true)

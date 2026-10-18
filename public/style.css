@@ -112,13 +112,6 @@ nav {
   gap:.6rem;
   align-items:center
 }
-.status-dot {
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#58744b;
-  box-shadow:0 0 0 4px #e8eddc
-}
 h1,h2,h3,p,figure {
   margin:0
 }
@@ -501,7 +494,7 @@ button {
 .hero-copy {
   animation:arrive .7s both
 }
-#fonctionnement {
+#how-it-works {
   scroll-margin-top:2rem
 }
 @keyframes arrive {
@@ -648,4 +641,39 @@ footer {
   transition:none!important
 }
 
+}
+
+/* Documentation stays readable alongside the landing page's shared navigation. */
+.guide { padding-block: 2rem 5rem; }
+.guide-heading { padding: 0 0 3rem; max-width: none; }
+.guide-heading .eyebrow { margin-top: 2.5rem; }
+.guide-heading h1 { font-size: clamp(2.8rem, 5vw, 4.5rem); }
+.guide-heading > p:last-child { max-width: 54ch; color: var(--muted); }
+.guide-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 4rem; align-items: start; }
+.guide-toc { position: sticky; top: 2rem; }
+.guide-toc nav { display: flex; flex-direction: column; align-items: flex-start; gap: .6rem; }
+.guide-toc p { font-size: .7rem; color: var(--muted); margin-bottom: .4rem; }
+.guide-toc a { font-size: .8rem; text-decoration: none; }
+.guide-toc a:hover { text-decoration: underline; }
+.guide-content { min-width: 0; max-width: 74ch; }
+.guide-section { padding-block: 0 2.8rem; scroll-margin-top: 2rem; }
+.guide-section h2 { font-size: 1.5rem; line-height: 1.3; letter-spacing: -.035em; font-weight: 600; margin-bottom: 1.2rem; }
+.guide-section p, .guide-section li, .guide-section dd { font-size: .9rem; color: var(--muted); }
+.guide-section p { margin-block: 1rem; }
+.guide-section li { margin-bottom: .6rem; }
+.guide-section ol { padding-left: 1.3rem; }
+.guide-section dt { font-weight: 600; font-size: .9rem; margin-top: 1.1rem; overflow-wrap: anywhere; }
+.guide-section dd { margin: .4rem 0 0; }
+.guide-note { background: #eaf0e1; border-left: 3px solid #7f9562; padding: 1rem 1.2rem; font-size: .85rem; margin-block: 1.4rem; }
+code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .85em; overflow-wrap: anywhere; }
+pre { max-width: 100%; overflow-x: auto; background: #edf0e7; border: 1px solid var(--line); border-radius: 10px; padding: 1.2rem; line-height: 1.8; }
+pre code { font-size: .75rem; overflow-wrap: normal; }
+.nav-links [aria-current="page"] { text-decoration: underline; }
+@media (max-width: 760px) {
+  .guide-layout { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .guide-toc { position: static; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+  .guide-toc nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem 1rem; }
+  .guide-toc p { grid-column: 1 / -1; }
+  .guide-section h2 { font-size: 1.3rem; }
+  .guide-heading { padding-bottom: 2rem; }
 }
