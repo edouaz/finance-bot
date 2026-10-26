@@ -80,10 +80,11 @@ FINANCE_DATA_KEY=/absolute/path/to/data.key</code>
 <section id="consent" class="guide-section">
 <h2>05 / Authorize and sync a bank</h2>
 <p>For the private web interface, follow <a href="#private-renewal">the renewal setup below</a>. The manual CLI fallback below assumes you registered and configured your own static callback URL; it is separate from the private web callback. Start authorization, open the printed URL privately and follow the bank consent flow.</p>
-<pre><code>.venv/bin/python bank_auth.py start bnp</code>
+<p>If a private web callback is configured but you want the manual fallback, explicitly select the registered GitHub callback for this command only. Replace this URL if you registered a different static callback.</p>
+<pre><code>env FINANCE_AUTH_REDIRECT_URL=https://edouaz.github.io/finance-bot/callback.html .venv/bin/python bank_auth.py start bnp</code>
 </pre>
-<p>On the callback page, copy the URL from the field. Return to your terminal, run the command below, then paste into its masked prompt. Never paste the URL into ChatGPT or an issue.</p>
-<pre><code>.venv/bin/python bank_auth.py finish bnp
+<p>On the callback page, copy the URL from the field. Return to your terminal, run the finish command printed by start (it preserves the callback and Python environment), then paste into its masked prompt. Never paste the URL into ChatGPT or an issue.</p>
+<pre><code>env FINANCE_AUTH_REDIRECT_URL=https://edouaz.github.io/finance-bot/callback.html .venv/bin/python bank_auth.py finish bnp
 .venv/bin/python -m finance.cli health
 .venv/bin/python -m finance.cli sync --bank bnp --start YYYY-MM-DD --end YYYY-MM-DD</code>
 </pre>
