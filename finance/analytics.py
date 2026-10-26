@@ -37,9 +37,12 @@ def public(row):
 
 def summary(rows,group='category'):
     currencies=defaultdict(lambda:{'spending':Decimal(0),'income':Decimal(0),'refunds':Decimal(0),'unclassified_credits':Decimal(0),'excluded_outflows':Decimal(0),'net_flow':Decimal(0),'groups':defaultdict(Decimal)})
-    pending=0; undated=0
+    pending=0; undated=0; other_statuses=defaultdict(int)
     for r in rows:
-        if r['status']!='BOOK': pending+=1; continue
+        if r['status']!='BOOK':
+            if r['status']=='PDNG': pending+=1
+            else: other_statuses[r['status']]+=1
+            continue
         if not r['date']: undated+=1; continue
         a=money(r['amount']); c=currencies[r['currency']]; c['net_flow']+=a
         if r['kind'] in CONSUMPTION and a<0:
@@ -53,7 +56,7 @@ def summary(rows,group='category'):
         c['net_spending']=c['spending']-c['refunds']
         c['savings_rate_estimate']=str((c['income']-c['net_spending'])/c['income']) if c['income'] else None
         out[code]={k:({g:str(v) for g,v in sorted(x.items(),key=lambda p:p[1],reverse=True)[:100]} if isinstance(x,dict) else str(x) if x is not None else None) for k,x in c.items()}
-    return {'currencies':out,'pending_excluded':pending,'undated_booked_excluded':undated,'classification':'Heuristic unless an owned counterparty is confirmed. Unknown credits are not income; transfer-like debits are not consumption. Savings rate is an estimate.'}
+    return {'currencies':out,'pending_excluded':pending,'other_statuses_excluded':dict(other_statuses),'undated_booked_excluded':undated,'classification':'Heuristic unless an owned counterparty is confirmed. Unknown credits are not income; transfer-like debits are not consumption. Savings rate is an estimate.'}
 
 def recurring(rows,as_of):
     groups=defaultdict(list)

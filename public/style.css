@@ -29,7 +29,7 @@ a {
 a,button {
   touch-action:manipulation
 }
-a:focus-visible,button:focus-visible,textarea:focus-visible {
+a:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible {
   outline:3px solid var(--green);
   outline-offset:5px
 }
@@ -676,4 +676,17 @@ pre code { font-size: .75rem; overflow-wrap: normal; }
   .guide-toc p { grid-column: 1 / -1; }
   .guide-section h2 { font-size: 1.3rem; }
   .guide-heading { padding-bottom: 2rem; }
+}
+
+/* Private-server navigation uses the same local document and button styles. */
+.connection-panel { background:#eaf0e1; border:1px solid var(--line); border-radius:14px; padding:1.5rem; margin-block:2rem; }
+.connection-panel input { display:block; width:100%; background:#fffef9; color:var(--ink); border:1px solid #a6b59a; border-radius:8px; padding:.9rem; font:inherit; font-size:.9rem; }
+.connection-panel .actions { margin-block:1.2rem 0; gap:.8rem; }
+.connection-panel #status { font-size:.85rem; overflow-wrap:anywhere; margin-block:1rem 0; }
+button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+.connection-panel label { font-weight:600; }
+.connection-panel #server-help { font-size:.8rem; }
+.connection-panel .secondary-button { background:transparent; color:var(--green); border:1px solid var(--green); }
+@media(max-width:650px) {
+  header>nav,.nav-links { flex-wrap:wrap; }
 }

@@ -1,5 +1,10 @@
-"""Read-only cached MCP tools. Synchronization is a separate operator command."""
+"""Cached MCP queries and explicit bank-to-cache synchronization."""
 import functools
+import json
+import os
+import re
+from ipaddress import ip_address
+from urllib.parse import urlsplit
 import threading
 import time
 from datetime import date, timedelta
@@ -9,13 +14,16 @@ from mcp.types import ToolAnnotations
 from finance.core import Settings, Client, FinanceError, dates, money
 from finance.store import Store
 from finance.service import Service
+from finance.connections import connection_status
 from finance.analytics import summary, recurring, alerts, public
 
-mcp=FastMCP('Personal Finance Tracker v2')
+mcp=FastMCP('Personal Finance Tracker v2', instructions='When a tool result contains connection_notices, briefly tell the user each notice and how to renew. These notices are cached consent metadata, not live bank verification. When the user asks to reconnect a bank, use get_reauthorization_link. The user completes consent on their private server; never ask for bank codes or callback URLs in chat.')
 annotations=ToolAnnotations(readOnlyHint=True,destructiveHint=False,idempotentHint=True,openWorldHint=False)
 _service=None
 _lock=threading.Lock()
 _calls=[]
+_sync_lock=threading.Lock()
+_notice_sent={}
 
 def service():
     global _service
@@ -33,30 +41,96 @@ def guarded(fn):
             if len(_calls)>=60: return {'error':'local_rate_limit','retry_after_seconds':60}
             _calls.append(t)
         try:
-            import json
             result=fn(*args,**kwargs)
-            if len(json.dumps(result,ensure_ascii=False).encode())>98304: return {'error':'response_limit_narrow_date_range_or_filters'}
-            return result
-        except FinanceError as e: return {'error':str(e)}
-        except Exception: return {'error':'local_data_unavailable'}
+        except FinanceError as e: result={'error':str(e)}
+        except Exception: result={'error':'local_data_unavailable'}
+        notices=[]
+        try:
+            notices=connection_notices()
+            if notices: result={**result,'connection_notices':notices}
+        except Exception:
+            pass  # A reminder must not prevent access to cached financial data.
+        try:
+            if len(json.dumps(result,ensure_ascii=False).encode())>98304:
+                return {'error':'response_limit_narrow_date_range_or_filters', **({'connection_notices':notices} if notices else {})}
+        except (TypeError,ValueError): return {'error':'local_data_unavailable'}
+        return result
     return run
 
+def connection_notices():
+    statuses=connection_status(Settings.load()); notices=[]
+    with _lock:
+        t=time.monotonic()
+        for bank,info in statuses.items():
+            if not (info.get('reauthorization_required') or info.get('expires_soon')): continue
+            key=(info['valid_until'],info['reauthorization_required'])
+            previous=_notice_sent.get(bank)
+            if previous and previous[0]==key and t-previous[1]<86400: continue
+            label={'bnp':'BNP Paribas Fortis','revolut':'Revolut'}[bank]
+            message=(f"L’autorisation {label} a expiré : reconnectez cette banque."
+                     if info['reauthorization_required'] else
+                     f"L’autorisation {label} expire dans {info['days_remaining']} jour(s) : pensez à la renouveler.")
+            notices.append({'bank':bank, **info, 'message':message,
+                            'renewal_action':f'Ouvrez votre interface web privée ou utilisez .venv/bin/python bank_auth.py start {bank}.'})
+            try:
+                notices[-1]['renewal_url']=get_reauthorization_link.__wrapped__(bank)['url']
+            except FinanceError:
+                pass  # The terminal fallback remains available before HTTPS is configured.
+            # shortcut: restart-stable throttling would require persistent delivery state.
+            _notice_sent[bank]=(key,t)
+    return notices
+
 Bank=Literal['all','bnp','revolut']
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=False,destructiveHint=False,idempotentHint=False,openWorldHint=True))
+@guarded
+def sync_transactions(start_date: str,end_date: str,bank: Bank='all') -> dict:
+    """Fetch bank transactions, account details and balances into the encrypted local cache for an inclusive date range. No bank writes or payments. Inspect per-account complete/errors/warnings; provider history limits apply. Use get_sync_status afterwards."""
+    dates(start_date,end_date)
+    if bank not in ('all','bnp','revolut'): raise FinanceError('invalid_bank')
+    if not _sync_lock.acquire(blocking=False):
+        return {'error':'sync_in_progress'}
+    try:
+        result=service().sync(bank,start_date,end_date)
+        return {**result,'complete':bool(result['results']) and all(r['complete'] for r in result['results'])}
+    finally:
+        _sync_lock.release()
 
 @mcp.tool(annotations=annotations)
 @guarded
 def get_connection_status() -> dict:
-    """Cached consent expirations and local configuration status; does not contact banks."""
-    import json
-    from datetime import datetime,timezone
-    settings=Settings.load(); result={}
-    for bank in ('bnp','revolut'):
-        try:
-            data=json.loads((settings.sessions/f'{bank}_session.json').read_text()); expiry=data.get('access',{}).get('valid_until')
-            expired=datetime.fromisoformat(expiry.replace('Z','+00:00'))<=datetime.now(timezone.utc) if expiry else None
-            result[bank]={'valid_until':expiry,'reauthorization_required':expired,'live_verified':False}
-        except Exception: result[bank]={'status':'session_unavailable','live_verified':False}
-    return result
+    """Cached consent expirations and private renewal links; does not contact banks."""
+    statuses=connection_status(Settings.load())
+    for bank,info in statuses.items():
+        try: info['renewal_url']=get_reauthorization_link.__wrapped__(bank)['url']
+        except FinanceError: pass
+    return statuses
+
+@mcp.tool(annotations=annotations)
+@guarded
+def get_reauthorization_link(bank: Literal['bnp','revolut']) -> dict:
+    """Return the configured private web interface for manual bank renewal. No authorization starts until the user signs in and confirms on their own server. Never returns bank codes, state or provider links."""
+    if bank not in ('bnp','revolut'): raise FinanceError('invalid_bank')
+    configured=os.environ.get('FINANCE_AUTH_REDIRECT_URL','')
+    try:
+        if any(c.isspace() or ord(c)<32 for c in configured) or any(c in configured for c in '\\?#%'):
+            raise ValueError
+        parsed=urlsplit(configured); host=parsed.hostname; port=parsed.port
+        if (parsed.scheme!='https' or not host or parsed.username is not None
+                or parsed.password is not None or parsed.path!='/callback'
+                or parsed.query or parsed.fragment or parsed.netloc.endswith(':')
+                or (port is not None and not 1<=port<=65535)):
+            raise ValueError
+        try: ip_address(host)
+        except ValueError:
+            if len(host)>253 or not all(re.fullmatch(r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?', label)
+                                       for label in host.split('.')):
+                raise ValueError
+        origin='https://'+('['+host+']' if ':' in host else host)+((':'+str(port)) if port is not None else '')
+    except ValueError:
+        raise FinanceError('private_web_not_configured') from None
+    return {'bank':bank,'url':origin+'/?bank='+bank,
+            'action':'Open your private interface, sign in, and confirm bank reauthorization there.'}
 
 @mcp.tool(annotations=annotations)
 @guarded
@@ -98,7 +172,7 @@ def get_sync_status() -> dict:
 
 @mcp.tool(annotations=annotations)
 @guarded
-def get_transactions(start_date: str,end_date: str,bank: Bank='all',account: str|None=None,currency: str|None=None,status: Literal['BOOK','PDNG']|None=None,query: str='',direction: Literal['all','incoming','outgoing']='all',category: str|None=None,kind: str|None=None,min_amount: str|None=None,max_amount: str|None=None,limit: int=50,cursor: str|None=None,transaction_id: str|None=None) -> dict:
+def get_transactions(start_date: str,end_date: str,bank: Bank='all',account: str|None=None,currency: str|None=None,status: Literal['BOOK','PDNG','CNCL','HOLD','OTHR','RJCT','SCHD']|None=None,query: str='',direction: Literal['all','incoming','outgoing']='all',category: str|None=None,kind: str|None=None,min_amount: str|None=None,max_amount: str|None=None,limit: int=50,cursor: str|None=None,transaction_id: str|None=None) -> dict:
     """Search cached history; 1–100 records/page, absolute amount filters. Reuse identical filters with next_cursor. Refund/pending/detail views use kind/status/transaction_id."""
     return service().transactions(start_date,end_date,bank,account,currency,status,query,direction,category,kind,min_amount,max_amount,limit,cursor,transaction_id)
 
@@ -126,7 +200,8 @@ def get_spending_summary(start_date: str,end_date: str,bank: Bank='all',account:
 @guarded
 def compare_periods(start_date: str,end_date: str,previous_start: str,previous_end: str,bank: Bank='all') -> dict:
     """Compare per-currency consumption across explicit periods; lengths included for interpretation."""
-    current=get_spending_summary(start_date,end_date,bank); previous=get_spending_summary(previous_start,previous_end,bank)
+    # The outer request handles rate limits, errors and reminders for both periods.
+    current=get_spending_summary.__wrapped__(start_date,end_date,bank); previous=get_spending_summary.__wrapped__(previous_start,previous_end,bank)
     if 'error' in current or 'error' in previous: raise FinanceError('comparison_unavailable')
     changes={}
     for c in set(current['currencies'])|set(previous['currencies']):
@@ -161,7 +236,7 @@ def get_weekly_report() -> dict:
     from datetime import datetime
     end=datetime.now(ZoneInfo('Europe/Brussels')).date()-timedelta(days=1); start=end-timedelta(days=6)
     result=service().report(start.isoformat(),end.isoformat())
-    result['recurring']=get_recurring_payments((end-timedelta(days=365)).isoformat(),end.isoformat())
+    result['recurring']=get_recurring_payments.__wrapped__((end-timedelta(days=365)).isoformat(),end.isoformat())
     return result
 
 @mcp.tool(annotations=annotations)

@@ -1,7 +1,7 @@
 import re
 from datetime import date, datetime, timezone
 from urllib.parse import quote
-from .core import BANKS, FinanceError, dates, money, normalize, now
+from .core import BANKS, TRANSACTION_STATUSES, FinanceError, dates, money, normalize, now
 from .analytics import decorate, public, summary, recurring, alerts
 
 class Service:
@@ -35,6 +35,7 @@ class Service:
                     try:
                         row=normalize(t,b,aid)
                         if not row['date']: complete=False; error='undated_transactions'
+                        if row['status'] not in ('BOOK','PDNG'): warnings.append('non_booked_status_'+row['status'])
                         # Preserve same-page multiplicity where no stable ID exists.
                         if row['identity_quality']=='ambiguous_fallback':
                             from .core import digest
@@ -73,7 +74,7 @@ class Service:
         if bank not in (*BANKS,'all'): raise FinanceError('invalid_bank')
         if not 1<=limit<=100: raise FinanceError('invalid_limit')
         if direction not in ('all','incoming','outgoing'): raise FinanceError('invalid_direction')
-        if status not in (None,'BOOK','PDNG'): raise FinanceError('invalid_status')
+        if status is not None and status not in TRANSACTION_STATUSES: raise FinanceError('invalid_status')
         if currency and not re.fullmatch('[A-Z]{3}',currency): raise FinanceError('invalid_currency')
         if len(query)>100: raise FinanceError('query_too_long')
         if cursor and not re.fullmatch('[a-f0-9]{64}',cursor): raise FinanceError('invalid_cursor')

@@ -13,6 +13,7 @@ import jwt
 import requests
 
 BANKS = ('bnp', 'revolut')
+TRANSACTION_STATUSES = ('BOOK', 'PDNG', 'CNCL', 'HOLD', 'OTHR', 'RJCT', 'SCHD')
 class FinanceError(Exception):
     """Safe error code; never contains provider payloads."""
 
@@ -84,6 +85,9 @@ class Client:
         if p.stat().st_mode & 0o077: raise FinanceError('unsafe_session_permissions')
         try: stored = json.loads(p.read_text()); sid=stored['session_id']
         except (ValueError,KeyError): raise FinanceError('invalid_session') from None
+        return self.session_info(sid)
+    def session_info(self, sid):
+        if not isinstance(sid,str) or not sid: raise FinanceError('invalid_session')
         info=self.get('/sessions/'+quote(sid,safe=''))
         expiry=info.get('access',{}).get('valid_until')
         if expiry:
@@ -116,7 +120,7 @@ def normalize(raw, bank, account):
     day=raw.get('booking_date') or raw.get('transaction_date') or raw.get('value_date')
     if day: dates(day,day)
     status=raw.get('status')
-    if status not in ('BOOK','PDNG'): raise FinanceError('unknown_transaction_status')
+    if status not in TRANSACTION_STATUSES: raise FinanceError('unknown_transaction_status')
     merchant=safe_text(((raw.get('creditor') if signed<0 else raw.get('debtor')) or {}).get('name',''))
     description=safe_text(' '.join(raw.get('remittance_information') or []))
     ref=raw.get('entry_reference')

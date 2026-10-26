@@ -10,7 +10,7 @@ def load_environment():
         if path.stat().st_mode & 0o077:
             raise RuntimeError('unsafe_environment_permissions')
         for name, value in dotenv_values(path).items():
-            if name in {'ENABLE_BANKING_APP_ID', 'ENABLE_BANKING_KEY', 'FINANCE_SESSIONS', 'FINANCE_STORAGE', 'FINANCE_DATA_KEY'} and value is not None:
+            if name in {'ENABLE_BANKING_APP_ID', 'ENABLE_BANKING_KEY', 'FINANCE_SESSIONS', 'FINANCE_STORAGE', 'FINANCE_DATA_KEY', 'FINANCE_AUTH_REDIRECT_URL', 'FINANCE_AUTH_PASSWORD_FILE'} and value is not None:
                 os.environ.setdefault(name, value)
 
 

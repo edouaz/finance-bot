@@ -188,10 +188,54 @@ class FinanceTests(unittest.TestCase):
         self.assertEqual(self.rows(t)[0]['kind'],'spending')
         t['bank_transaction_code']=None
         self.assertEqual(self.rows(t)[0]['category'],'subscriptions')
+    def test_provider_statuses_preserved_and_excluded_from_totals(self):
+        from finance.core import TRANSACTION_STATUSES
+        for status in TRANSACTION_STATUSES:
+            with self.subTest(status=status):
+                row=self.rows(raw(status=status))[0]
+                self.assertEqual(row['status'],status)
+                if status!='BOOK':
+                    result=summary([row])
+                    self.assertEqual(result['currencies'],{})
+                    self.assertEqual(result['pending_excluded'],int(status=='PDNG'))
+                    self.assertEqual(result['other_statuses_excluded'],{} if status=='PDNG' else {status:1})
+        with self.assertRaisesRegex(FinanceError,'unknown_transaction_status'):
+            normalize(raw(status='INVALID'),'bnp',self.aid)
+    def test_bnp_other_status_sync_retains_transaction(self):
+        self.service.client.session.return_value={'accounts':['uid']}
+        self.service.client.get.return_value={'balances':[]}
+        self.service.client.transactions.return_value=([raw(status='OTHR'),raw(ref='r2')],True,None)
+        result=self.service.sync('bnp','2026-09-01','2026-09-30')['results'][0]
+        self.assertTrue(result['complete'])
+        self.assertEqual(result['count'],2)
+        self.assertIn('non_booked_status_OTHR',result['warnings'])
+        rows=self.service.transactions('2026-09-01','2026-09-30',status='OTHR')['items']
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]['status'],'OTHR')
     def test_discovery(self):
         from finance_mcp_v2 import mcp
         tools=asyncio.run(mcp.list_tools()); names={t.name for t in tools}
         self.assertIn('get_weekly_report',names); self.assertIn('get_transactions',names)
-        self.assertTrue(all(t.annotations.readOnlyHint for t in tools)); self.assertFalse(any('sync'==t.name for t in tools))
+        self.assertIn('sync_transactions',names)
+        self.assertTrue(all(t.annotations.readOnlyHint for t in tools if t.name!='sync_transactions'))
+        tool=next(t for t in tools if t.name=='sync_transactions')
+        self.assertFalse(tool.annotations.readOnlyHint)
+        self.assertTrue(tool.annotations.openWorldHint)
+    def test_mcp_sync_results_validation_and_lock(self):
+        import finance_mcp_v2 as api
+        from unittest.mock import patch, Mock
+        fake=Mock()
+        fake.sync.return_value={'results':[{'complete':False,'error':'session_expired'}]}
+        with patch.object(api,'service',return_value=fake):
+            result=api.sync_transactions('2026-09-01','2026-09-30','bnp')
+            self.assertFalse(result['complete'])
+            fake.sync.assert_called_once_with('bnp','2026-09-01','2026-09-30')
+            self.assertEqual(api.sync_transactions('bad','bad')['error'],'invalid_date')
+            api._sync_lock.acquire()
+            try: self.assertEqual(api.sync_transactions('2026-09-01','2026-09-30')['error'],'sync_in_progress')
+            finally: api._sync_lock.release()
+            fake.sync.side_effect=RuntimeError('private provider detail')
+            self.assertEqual(api.sync_transactions('2026-09-01','2026-09-30')['error'],'local_data_unavailable')
+            self.assertFalse(api._sync_lock.locked())
 
 if __name__=='__main__': unittest.main()
