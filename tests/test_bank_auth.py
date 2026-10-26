@@ -281,7 +281,8 @@ class CommandLineTests(unittest.TestCase):
             auth.return_value.start.return_value = 'https://auth.enablebanking.com/synthetic'
             bank_auth.start('bnp')
         command = output.getvalue().split('Puis : ', 1)[1].strip()
-        self.assertEqual(shlex.split(command), ['/private environment/bin/python',
+        self.assertEqual(shlex.split(command), ['env', 'FINANCE_AUTH_REDIRECT_URL=' + bank_auth.REDIRECT_URL,
+                         '/private environment/bin/python',
                          str(Path(bank_auth.__file__).resolve()), 'finish', 'bnp'])
 
     def test_private_callback_guides_browser_flow_without_cli_state(self):

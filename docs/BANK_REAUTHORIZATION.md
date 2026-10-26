@@ -294,3 +294,21 @@ configuration, garde une sauvegarde, redémarre seulement Caddy et affiche aprè
 15 secondes les seuls événements d’émission, en masquant les paramètres d’URL.
 Il refuse de remplacer une configuration modifiée indépendamment depuis la préparation.
 Ne pas activer les logs globaux debug ou les journaux d’accès pour ce diagnostic.
+
+## Parcours manuel immédiat : Revolut avec le callback GitHub
+
+Si HTTPS du VPS est reporté, réenregistrer d’abord exactement
+`https://edouaz.github.io/finance-bot/callback.html` dans Enable Banking.
+Les commandes ci-dessous remplacent le callback pour cette commande seulement,
+sans modifier l’environnement privé installé ni les sessions existantes :
+
+```sh
+env FINANCE_AUTH_REDIRECT_URL=https://edouaz.github.io/finance-bot/callback.html /home/edouard/finance-bot/.venv/bin/python /home/edouard/finance-bot/bank_auth.py start revolut
+```
+
+Ouvrir le lien, valider Revolut, puis copier l’URL du champ « Callback URL » sur
+la page GitHub : les paramètres ont déjà été retirés de la barre d’adresse.
+La commande finish imprimée par start conserve maintenant explicitement le même
+callback et le même interpréteur. La lancer et coller l’URL dans sa saisie masquée,
+au plus tard 30 minutes après start. Ne jamais coller ce retour dans un chat.
+Le site statique peut être journalisé par son hébergeur ; il demeure un repli manuel.

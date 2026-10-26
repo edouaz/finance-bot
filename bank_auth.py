@@ -163,7 +163,8 @@ def start(bank):
     target = auth.start(bank, 'operator-cli')
     print('Ouvre cette URL en privé :')
     print(target)
-    command = shlex.join([sys.executable, str(Path(__file__).resolve()), 'finish', bank])
+    command = shlex.join(['env', 'FINANCE_AUTH_REDIRECT_URL=' + auth.redirect,
+                          sys.executable, str(Path(__file__).resolve()), 'finish', bank])
     print('Puis :', command)
 
 
