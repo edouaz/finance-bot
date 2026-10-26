@@ -153,7 +153,14 @@ class Authorization:
 
 
 def start(bank):
-    target = Authorization().start(bank, 'operator-cli')
+    auth = Authorization()
+    if urlsplit(auth.redirect).path == '/callback':
+        # The private callback requires state bound to the user's browser cookie.
+        print('Ouvre ton interface privée :')
+        print(auth.redirect.removesuffix('/callback') + '/?bank=' + bank)
+        print('Connecte-toi puis confirme la banque ; le retour sera traité automatiquement.')
+        return
+    target = auth.start(bank, 'operator-cli')
     print('Ouvre cette URL en privé :')
     print(target)
     command = shlex.join([sys.executable, str(Path(__file__).resolve()), 'finish', bank])

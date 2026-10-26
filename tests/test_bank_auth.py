@@ -277,11 +277,25 @@ class CommandLineTests(unittest.TestCase):
         with patch('bank_auth.Authorization') as auth, \
              patch('bank_auth.sys.executable', '/private environment/bin/python'), \
              contextlib.redirect_stdout(output):
+            auth.return_value.redirect = bank_auth.REDIRECT_URL
             auth.return_value.start.return_value = 'https://auth.enablebanking.com/synthetic'
             bank_auth.start('bnp')
         command = output.getvalue().split('Puis : ', 1)[1].strip()
         self.assertEqual(shlex.split(command), ['/private environment/bin/python',
                          str(Path(bank_auth.__file__).resolve()), 'finish', 'bnp'])
+
+    def test_private_callback_guides_browser_flow_without_cli_state(self):
+        import contextlib
+        import io
+        import bank_auth
+        output = io.StringIO()
+        with patch('bank_auth.Authorization') as auth, contextlib.redirect_stdout(output):
+            auth.return_value.redirect = 'https://private.example/callback'
+            bank_auth.start('revolut')
+            auth.return_value.start.assert_not_called()
+        self.assertIn('https://private.example/?bank=revolut', output.getvalue())
+        self.assertIn('automatiquement', output.getvalue())
+        self.assertNotIn(' finish ', output.getvalue())
 
     def test_expected_errors_are_actionable_without_exposing_payloads(self):
         import contextlib

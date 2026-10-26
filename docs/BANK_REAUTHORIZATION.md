@@ -275,3 +275,10 @@ continue à refuser la modification d’un dépôt existant ; aucune publication
 Vérification de la page statique : `node tests/test_connection.js` (Node uniquement
 pour le test, aucune dépendance frontend à installer). La navigation réelle et le
 retour bancaire devront être validés après la mise en service HTTPS autorisée.
+
+Quand `FINANCE_AUTH_REDIRECT_URL` désigne le callback privé `/callback`, la commande
+CLI `start` fournit elle aussi le lien vers l’interface privée, sans créer de state
+CLI ni appeler Enable Banking. Le consentement démarre dans le navigateur afin de
+lier correctement le cookie au state ; le retour est automatique, sans `finish`.
+Le parcours CLI start/finish demeure réservé au callback statique de secours
+(`callback.html`), qui doit toujours être enregistré si l’on souhaite le conserver.
