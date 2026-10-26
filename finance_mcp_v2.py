@@ -99,8 +99,12 @@ def sync_transactions(start_date: str,end_date: str,bank: Bank='all') -> dict:
 @mcp.tool(annotations=annotations)
 @guarded
 def get_connection_status() -> dict:
-    """Cached consent expirations and local configuration status; does not contact banks."""
-    return connection_status(Settings.load())
+    """Cached consent expirations and private renewal links; does not contact banks."""
+    statuses=connection_status(Settings.load())
+    for bank,info in statuses.items():
+        try: info['renewal_url']=get_reauthorization_link.__wrapped__(bank)['url']
+        except FinanceError: pass
+    return statuses
 
 @mcp.tool(annotations=annotations)
 @guarded

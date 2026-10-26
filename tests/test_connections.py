@@ -97,6 +97,19 @@ class ConnectionTests(unittest.TestCase):
         self.assertEqual(notice['renewal_url'], 'https://private.example/?bank=revolut')
         self.assertNotIn('never-expose', json.dumps(notice))
 
+    def test_status_keeps_private_links_available_without_due_reminders(self):
+        import os
+        self.save('bnp', timedelta(days=180))
+        with patch.dict(os.environ, {'FINANCE_AUTH_REDIRECT_URL': 'https://private.example/callback'}):
+            result = api.get_connection_status()
+            self.assertNotIn('connection_notices', result)
+            for bank in ('bnp', 'revolut'):
+                self.assertEqual(result[bank]['renewal_url'], 'https://private.example/?bank=' + bank)
+        with patch.dict(os.environ, {'FINANCE_AUTH_REDIRECT_URL': 'https://bad.example/callback?code=secret'}):
+            result = api.get_connection_status()
+            self.assertNotIn('renewal_url', result['bnp'])
+            self.assertNotIn('secret', json.dumps(result))
+
     def test_concurrent_queries_emit_one_notice(self):
         self.save('bnp', timedelta(days=2))
         query = api.guarded(lambda: {'ok': True})

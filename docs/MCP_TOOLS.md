@@ -52,3 +52,8 @@ there is no fallback to a public site. The tool uses the existing MCP tunnel acc
 makes no network request, starts no banking authorization and performs no financial
 cache writes. The user still authenticates and confirms on their own private server;
 no bank code, state, session identifier or Enable Banking redirect is returned.
+
+When private HTTPS is configured, `get_connection_status` also includes a validated
+`renewal_url` per bank, even without a due reminder. This preserves access through
+existing ChatGPT connections that have not yet refreshed discovery of the new
+`get_reauthorization_link` tool. Invalid/missing web configuration omits that URL.
