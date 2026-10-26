@@ -78,6 +78,11 @@ WantedBy=multi-user.target
     log {{
         output discard
     }}
+    log certificates {{
+        include tls.obtain tls.issuance.acme
+        output stderr
+        level INFO
+    }}
 }}
 {host} {{
     reverse_proxy 127.0.0.1:8765 {{

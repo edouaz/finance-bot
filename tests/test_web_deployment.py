@@ -3,6 +3,9 @@ import contextlib
 import importlib.util
 import io
 import os
+import json
+import pwd
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -36,6 +39,8 @@ class DeploymentTests(unittest.TestCase):
         self.assertIn('personal.example.org {', caddy)
         self.assertIn('admin off', caddy)
         self.assertIn('output discard', caddy)
+        self.assertIn('include tls.obtain tls.issuance.acme', caddy)
+        self.assertIn('log certificates {', caddy)
         self.assertIn('127.0.0.1:8765', caddy)
         self.assertIn('header_up X-Forwarded-Proto https', caddy)
         self.assertIn('header_up -Forwarded', caddy)
@@ -95,6 +100,55 @@ class DeploymentTests(unittest.TestCase):
             directory.chmod(0o755)
             with self.assertRaises(ValueError):
                 deploy.activate('bank.example.org', directory)
+
+    def diagnostic(self, root, configuration_matches=True):
+        directory = Path(root)
+        binary = directory / 'bin'; binary.mkdir()
+        log = directory / 'commands'
+        fixture = directory / 'journal'
+        fixture.write_text('\n'.join(json.dumps(row) for row in [
+            {'logger': 'http.log.error', 'msg': 'bank-code-secret'},
+            {'logger': 'tls.handshake', 'msg': 'not-issuance'},
+            {'logger': 'tls.obtain', 'level': 'error', 'msg': 'certificate failed',
+             'error': 'https://ca.example/order?token=certificate-secret'},
+            {'logger': 'tls.issuance.acme.acme_client', 'msg': 'challenge rejected'},
+        ]))
+        commands = {
+            'id': 'echo 0', 'runuser': ':', 'caddy': ':',
+            'cmp': 'exit ' + ('0' if configuration_matches else '1'),
+            'cp': ':', 'install': 'echo install >> "$DIAG_COMMANDS"',
+            'systemctl': 'echo "$*" >> "$DIAG_COMMANDS"', 'sleep': ':',
+            'journalctl': 'cat "$DIAG_FIXTURE"',
+        }
+        for name, body in commands.items():
+            path = binary / name
+            path.write_text('#!/bin/sh\n' + body + '\n'); path.chmod(0o700)
+        environment = {**os.environ, 'PATH': str(binary) + os.pathsep + os.defpath,
+                       'SUDO_USER': pwd.getpwuid(os.getuid()).pw_name,
+                       'DIAG_COMMANDS': str(log), 'DIAG_FIXTURE': str(fixture)}
+        script = Path(__file__).resolve().parents[1] / 'scripts/diagnose_bank_tls.sh'
+        result = subprocess.run(['/bin/sh', str(script), 'vps.example.org'], env=environment,
+                                capture_output=True, text=True, timeout=10)
+        return result, log.read_text() if log.exists() else ''
+
+    def test_diagnostic_emits_only_certificate_logs_and_redacts_queries(self):
+        with tempfile.TemporaryDirectory() as root:
+            result, commands = self.diagnostic(root)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('certificate failed', result.stdout)
+        self.assertIn('challenge rejected', result.stdout)
+        self.assertNotIn('bank-code-secret', result.stdout)
+        self.assertNotIn('not-issuance', result.stdout)
+        self.assertNotIn('certificate-secret', result.stdout)
+        self.assertIn('?[redacted]', result.stdout)
+        self.assertEqual(commands.splitlines(), ['install', 'restart caddy.service'])
+
+    def test_diagnostic_preserves_independently_changed_configuration(self):
+        with tempfile.TemporaryDirectory() as root:
+            result, commands = self.diagnostic(root, configuration_matches=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(commands, '')
+        self.assertIn('Configuration modifiée', result.stderr)
 
     def test_invalid_environment_is_not_replaced(self):
         with tempfile.TemporaryDirectory() as root:

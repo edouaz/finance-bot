@@ -71,7 +71,7 @@ la mémoire après le démarrage avec `systemctl show ... -p MemoryCurrent`, san
 promettre une consommation non mesurée. Node n’est utilisé que pour les tests du site.
 
 Le proxy écoute en HTTPS public ; Python écoute exclusivement sur 127.0.0.1:8765.
-Les journaux de requêtes et les journaux Caddy pouvant contenir une URL sont désactivés.
+Les journaux de requêtes et les erreurs HTTP Caddy pouvant contenir un callback sont désactivés. Seuls `tls.obtain` et `tls.issuance.acme` peuvent produire des diagnostics de certificat, jamais les requêtes bancaires.
 Le service Python a `NoNewPrivileges`, un umask 0077, un système/home en lecture seule
 et un droit d’écriture limité au dossier des sessions. Ce choix masque aussi les
 traces d’erreur : diagnostiquer avec des codes fixes, jamais des callbacks complets.
@@ -282,3 +282,15 @@ CLI ni appeler Enable Banking. Le consentement démarre dans le navigateur afin 
 lier correctement le cookie au state ; le retour est automatique, sans `finish`.
 Le parcours CLI start/finish demeure réservé au callback statique de secours
 (`callback.html`), qui doit toujours être enregistré si l’on souhaite le conserver.
+
+## Certificat HTTPS pas encore disponible
+
+Si les services sont actifs mais la négociation TLS échoue, ne pas lancer de
+consentement bancaire et ne pas contourner la vérification du certificat.
+`scripts/diagnose_bank_tls.sh nom-public-du-vps.example`, exécuté avec sudo,
+active uniquement les diagnostics d’obtention de certificat (`tls.obtain` et
+`tls.issuance.acme`) en conservant tous les journaux HTTP masqués. Il valide la
+configuration, garde une sauvegarde, redémarre seulement Caddy et affiche après
+15 secondes les seuls événements d’émission, en masquant les paramètres d’URL.
+Il refuse de remplacer une configuration modifiée indépendamment depuis la préparation.
+Ne pas activer les logs globaux debug ou les journaux d’accès pour ce diagnostic.
