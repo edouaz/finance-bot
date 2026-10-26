@@ -13,6 +13,7 @@ class StdioTests(unittest.TestCase):
                 async with ClientSession(read,write,read_timeout_seconds=timedelta(seconds=15)) as session:
                     init=await session.initialize()
                     self.assertEqual(init.serverInfo.name,'Personal Finance Tracker v2')
+                    self.assertIn('connection_notices',init.instructions)
                     tools=await session.list_tools()
                     self.assertGreaterEqual(len(tools.tools),15)
                     response=await session.call_tool('get_connection_status',{})

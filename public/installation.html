@@ -26,7 +26,7 @@
 <div class="guide-layout">
 <aside class="guide-toc">
 <nav aria-label="On this page">
-<p>On this page</p><a href="#requirements">Before you start</a><a href="#install">Install</a><a href="#bank">Bank application</a><a href="#storage">Encrypted storage</a><a href="#consent">Authorize & sync</a><a href="#tunnel">Private tunnel</a><a href="#chatgpt">Connect ChatGPT</a><a href="#persistent">Linux service</a><a href="#troubleshooting">Troubleshooting</a><a href="#maintenance">Maintenance</a>
+<p>On this page</p><a href="#requirements">Before you start</a><a href="#install">Install</a><a href="#bank">Bank application</a><a href="#storage">Encrypted storage</a><a href="#consent">Authorize & sync</a><a href="#private-renewal">Private bank renewal</a><a href="#tunnel">Private tunnel</a><a href="#chatgpt">Connect ChatGPT</a><a href="#persistent">Linux service</a><a href="#troubleshooting">Troubleshooting</a><a href="#maintenance">Maintenance</a>
 </nav>
 </aside>
 <article class="guide-content">
@@ -48,17 +48,9 @@ cd &quot;$HOME/finance-bot&quot;
 </section>
 <section id="bank" class="guide-section">
 <h2>03 / Configure your bank application</h2>
-<p>Register an application with Enable Banking and obtain the matching RSA private key. Host the contents of <code>public/</code> on your own HTTPS website, including <code>callback.html</code>, <code>callback.js</code> and the stylesheet. Register your exact callback URL with the provider. For a Pages fork, it may look like <code>https://YOUR_ACCOUNT.github.io/finance-bot/callback.html</code>.</p>
-<p>Edit these constants in your local <code>bank_auth.py</code> before authorization:</p>
-<dl>
-<dt><code>APP_ID</code>
-</dt>
-<dd>Your own Enable Banking application ID.</dd>
-<dt><code>REDIRECT_URL</code>
-</dt>
-<dd>Your registered HTTPS callback, with the exact same scheme, host and path.</dd>
-</dl>
-<p>This historical script does not read these values from the environment. Use the same application ID in the v2 environment in the next step.</p>
+<p>Register your own application with Enable Banking and obtain the matching RSA private key. Register your exact HTTPS callback with the provider, using the same scheme, host and path as your configuration. For the private web interface, use <code>https://YOUR_PRIVATE_SERVER/callback</code>; bank codes return directly to your server.</p>
+<p>The current authorization script reads the protected environment file described below. Set <code>ENABLE_BANKING_APP_ID</code> to your application ID, <code>ENABLE_BANKING_KEY</code> to your private key path and <code>FINANCE_AUTH_REDIRECT_URL</code> to your registered callback. Do not edit source constants or reuse the original owner’s application.</p>
+<p>The historical static <code>callback.html</code> and <code>callback.js</code> remain available for a separately registered CLI fallback. Prefer the <a href="#private-renewal">private web callback</a> for renewal: the Pages entry page must never be registered as that callback.</p>
 <pre><code>mkdir -p keys data
 chmod 700 keys data
 # Copy your application&#x27;s RSA private key to keys/private.pem first.
@@ -87,7 +79,7 @@ FINANCE_DATA_KEY=/absolute/path/to/data.key</code>
 </section>
 <section id="consent" class="guide-section">
 <h2>05 / Authorize and sync a bank</h2>
-<p>Start authorization, open the printed URL privately and follow the bank consent flow.</p>
+<p>For the private web interface, follow <a href="#private-renewal">the renewal setup below</a>. The manual CLI fallback below assumes you registered and configured your own static callback URL; it is separate from the private web callback. Start authorization, open the printed URL privately and follow the bank consent flow.</p>
 <pre><code>.venv/bin/python bank_auth.py start bnp</code>
 </pre>
 <p>On the callback page, copy the URL from the field. Return to your terminal, run the command below, then paste into its masked prompt. Never paste the URL into ChatGPT or an issue.</p>
@@ -97,6 +89,19 @@ FINANCE_DATA_KEY=/absolute/path/to/data.key</code>
 </pre>
 <p>Replace the dates with a short past interval in ISO format. For Revolut, repeat authorization and synchronization with <code>revolut</code>. Use <code>--bank all</code> only after authorizing both banks. Pending authorization expires after 30 minutes; restart if necessary.</p>
 <p><code>health</code> checks local storage, not your bank or tunnel. Inspect <code>accounts_processed</code>, <code>complete</code> and <code>errors</code> after synchronization. Partial coverage is not a complete bank history.</p>
+</section>
+<section id="private-renewal" class="guide-section">
+<h2>Renew bank access on your private server</h2>
+<p>The optional <code>bank_auth_web.py</code> interface runs on your own VPS. It provides buttons for BNP Paribas Fortis and Revolut, validates a short-lived, single-use state, exchanges the bank code server-side and checks the new session before replacing the local session file. Existing transaction history stays in your encrypted database.</p>
+<ol>
+<li>Use your own HTTPS hostname and a private login. Configure a local TLS reverse proxy to <code>127.0.0.1:8765</code>; do not expose that internal port directly.</li>
+<li>Register <code>https://YOUR_PRIVATE_SERVER/callback</code> in your own Enable Banking application. Set <code>FINANCE_AUTH_REDIRECT_URL</code> to that exact URL and <code>FINANCE_AUTH_PASSWORD_FILE</code> to a protected 0600 file containing a strong, randomly generated password. The private login username is <code>finance</code>.</li>
+<li>Follow the <a href="https://github.com/edouaz/finance-bot/blob/main/docs/BANK_REAUTHORIZATION.md">full private renewal runbook</a> for password generation, TLS proxy configuration, log redaction, tests and explicit service startup. Enable it only after you approve the configuration and any hosting or provider costs.</li>
+<li>Open <a href="connection.html">the private server entry page</a>, enter only your server’s HTTPS origin and confirm. Sign in on your server, select your bank and complete consent in the same browser. Never paste bank codes, secrets or callback URLs into ChatGPT.</li>
+</ol>
+<p>GitHub Pages only helps you navigate to your own instance. It hosts no private banking service, starts no authorization and remembers only the nonsecret server origin in your browser after confirmation. Use “Forget this address” to remove it. Each person provides their own VPS, application credentials and configuration; no central financial storage or payment service is added.</p>
+<p>Once the private interface is configured, <code>get_reauthorization_link(bank="bnp")</code> or <code>get_reauthorization_link(bank="revolut")</code> can return its entry link in ChatGPT. This read-only tool does not launch bank consent. If it reports <code>private_web_not_configured</code>, check the private callback configuration and refresh MCP discovery after restarting your own server.</p>
+<p>Renewal does not download transactions automatically. Inspect the session status and run a limited synchronization afterwards. Failed verification leaves the old local session in place; restart the authorization flow after an expired or consumed callback.</p>
 </section>
 <section id="tunnel" class="guide-section">
 <h2>06 / Set up the private MCP tunnel</h2>
@@ -156,7 +161,7 @@ sudo systemctl restart finance-tunnel.service</code>
 </dt>
 <dd>Use mode 600 for secret files and 700 for their private directories. Do not solve this by making secrets public.</dd>
 <dt>Callback rejected or authorization expired</dt>
-<dd>Check the registered HTTPS URL and constants in <code>bank_auth.py</code>, then restart authorization.</dd>
+<dd>Check the registered HTTPS URL and <code>FINANCE_AUTH_REDIRECT_URL</code> in your protected environment file, then restart authorization.</dd>
 <dt><code>authorization_unavailable</code>
 </dt>
 <dd>Check the application, RSA key and provider authorization. This error alone does not prove bank consent expired.</dd>
