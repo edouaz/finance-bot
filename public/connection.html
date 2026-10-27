@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'">
+  <meta name="description" content="Open your own private Finance Tracker server to renew BNP Paribas Fortis or Revolut access. No banking service or financial data is hosted on this page.">
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script src="connection.js" defer></script>
+  <title>Renew bank access — Finance Tracker</title>
+</head>
+<body><a class="skip" href="#main">Skip to content</a>
+<header><nav aria-label="Main navigation">
+  <a class="brand" href="index.html"><img class="brand-mark" src="favicon.svg" alt="" width="36" height="36">Finance Tracker<span class="project-label"> / personal project</span></a>
+  <div class="nav-links"><a href="index.html#how-it-works">How it works</a><a href="installation.html">Setup guide <span aria-hidden="true">↗</span></a><button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false" title="Switch to dark theme"><img class="moon-icon" src="moon.svg" alt="" width="19" height="19"><img class="sun-icon" src="sun.svg" alt="" width="19" height="19"></button></div>
+</nav></header>
+<main id="main" class="document">
+  <a class="back-link" href="index.html">← Back to the project</a>
+  <p class="eyebrow">Your own instance</p>
+  <h1>Renew bank access.<br><em>On your private server.</em></h1>
+  <p>Already running Finance Tracker? Open your own server to renew BNP Paribas Fortis or Revolut access. This GitHub Pages site is an entry point; it hosts no banking service and receives no bank credentials, codes or financial data.</p>
+  <div class="connection-panel">
+    <label for="server">Your private server’s HTTPS address</label>
+    <p id="server-help">For example, https://finance.your-domain.example — only the server address, without a path, password, code or callback link.</p>
+    <input id="server" type="url" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="server-help status" placeholder="https://finance.your-domain.example">
+    <p id="status" role="status" aria-live="polite">Enter the address of a server you control.</p>
+    <div class="actions"><button id="open" type="button" disabled>Remember and open my private server <span aria-hidden="true">↗</span></button><button id="forget" class="secondary-button" type="button">Forget this address</button></div>
+  </div>
+  <p>Check the address before confirming. Only its HTTPS origin is saved in this browser, without secrets. No payment or central storage is added by this page.</p>
+  <h2>Sign in on your own server</h2>
+  <p>Your server asks for its private login, then shows the bank renewal buttons. Bank consent takes place through Enable Banking and your bank. Never enter a banking password on this static site or share a callback URL in a chat.</p>
+  <h2>Each instance belongs to its owner</h2>
+  <p>Each user owns and configures their VPS, Enable Banking application, credentials and encrypted history. This page cannot activate an unconfigured server. Your private web interface must already be securely configured and running.</p>
+  <p>Need to prepare your instance? <a href="installation.html#private-renewal">Read the private renewal setup notes</a>.</p>
+  <noscript>JavaScript is needed to validate and remember the address. You can open your own private server directly from your browser’s address bar.</noscript>
+</main>
+<footer><a class="brand" href="index.html"><img class="brand-mark" src="favicon.svg" alt="" width="36" height="36">Finance Tracker</a><p>A little more clarity, at your own pace.</p><div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a></div></footer>
+</body>
+</html>
