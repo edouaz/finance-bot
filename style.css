@@ -1,10 +1,18 @@
 :root {
   color-scheme:light;
-  --paper:#f7f8f2;
-  --ink:#253c31;
-  --muted:#5c6c62;
-  --green:#28553e;
-  --line:#dce2d7;
+  --paper:#faf9f6;
+  --ink:#20372e;
+  --muted:#596b62;
+  --green:#216645;
+  --line:#dce4dc;
+  --surface:#ffffff;
+  --soft:#edf3ec;
+  --accent:#387450;
+  --hover:#184f35;
+  --on-accent:#ffffff;
+  --field-border:#96ad9c;
+  --glow:#dfecdf;
+  --shadow:#183d2512;
   font-family:"Avenir Next",Avenir,"Segoe UI",sans-serif;
   background:var(--paper);
   color:var(--ink);
@@ -52,22 +60,15 @@ nav {
 .brand {
   gap:.7rem;
   font-weight:650;
-  letter-spacing:-.04em;
+  letter-spacing:-.035em;
   text-decoration:none;
   font-size:1.2rem
 }
 .brand-mark {
-  display:grid;
-  place-items:center;
-  background:var(--green);
-  color:var(--paper);
+  display:block;
   width:36px;
   height:36px;
-  border-radius:11px;
-  font-family:Georgia,serif;
-  font-size:1.9rem;
-  line-height:1;
-  padding-bottom:.25rem
+  flex-shrink:0
 }
 .project-label {
   font-size:.7rem;
@@ -125,7 +126,7 @@ h1 {
 h1 em {
   font-family:Georgia,"Times New Roman",serif;
   font-weight:400;
-  color:#60764c;
+  color:var(--accent);
   letter-spacing:-.06em
 }
 .intro {
@@ -146,7 +147,7 @@ h1 em {
   gap:1.8rem;
   padding:.9rem 1.2rem;
   background:var(--green);
-  color:#fff;
+  color:var(--on-accent);
   border-radius:8px;
   text-decoration:none;
   font-size:.85rem;
@@ -154,7 +155,7 @@ h1 em {
   transition:transform .2s,background .2s
 }
 .button:hover,button:hover {
-  background:#376b50;
+  background:var(--hover);
   transform:translateY(-2px)
 }
 .button:active,button:active {
@@ -183,12 +184,12 @@ h1 em {
   position:absolute;
   inset:0;
   border-radius:50%;
-  background:radial-gradient(ellipse,#e3ead9,transparent 70%);
+  background:radial-gradient(ellipse,var(--glow),transparent 70%);
   z-index:-2
 }
 .orbit {
   position:absolute;
-  border:1px solid #dce4d4;
+  border:1px solid var(--line);
   border-radius:50%;
   z-index:-1;
   width:90%;
@@ -201,9 +202,9 @@ h1 em {
   transform:rotate(32deg)
 }
 .summary {
-  background:#fffef9;
-  border:1px solid #e3e7da;
-  box-shadow:0 22px 65px #36502a12;
+  background:var(--surface);
+  border:1px solid var(--line);
+  box-shadow:0 22px 65px var(--shadow);
   border-radius:18px;
   width:85%;
   max-width:370px;
@@ -222,7 +223,7 @@ h1 em {
 .demo {
   font-weight:400;
   font-size:.6rem;
-  background:#edf1e6;
+  background:var(--soft);
   padding:.15rem .5rem;
   border-radius:4px;
   color:var(--muted)
@@ -248,16 +249,16 @@ h1 em {
   overflow:visible
 }
 .chart-guide {
-  stroke:#e9ecdf;
+  stroke:var(--line);
   stroke-width:1;
   fill:none;
   stroke-dasharray:3 5
 }
 .chart-fill {
-  fill:#edf1e4
+  fill:var(--soft)
 }
 .chart-line {
-  stroke:#67854b;
+  stroke:var(--accent);
   stroke-width:2.5;
   stroke-linecap:round;
   stroke-linejoin:round;
@@ -282,7 +283,7 @@ h1 em {
   font-size:.65rem
 }
 .transaction-icon {
-  background:#eef1e6;
+  background:var(--soft);
   padding:.35rem .65rem;
   border-radius:9px;
   font-size:1rem
@@ -304,16 +305,16 @@ h1 em {
   display:flex;
   align-items:center;
   gap:.7rem;
-  background:#fffef9;
-  box-shadow:0 10px 35px #36502a14;
-  border:1px solid #e1e7d8;
+  background:var(--surface);
+  box-shadow:0 10px 35px var(--shadow);
+  border:1px solid var(--line);
   border-radius:12px;
   padding:.9rem 1.1rem;
   font-size:.72rem;
   animation:arrive 1s .35s both
 }
 .note-icon {
-  background:#e9efd9;
+  background:var(--soft);
   color:var(--green);
   border-radius:50%;
   padding:.25rem .65rem;
@@ -341,7 +342,7 @@ h1 em {
 }
 .principles span {
   font-size:1.3rem;
-  color:#6b8059
+  color:var(--accent)
 }
 .features {
   display:grid;
@@ -372,7 +373,7 @@ h1 em {
 }
 .number {
   font-size:.7rem;
-  color:#657954;
+  color:var(--accent);
   padding-top:.3rem;
   font-variant-numeric:tabular-nums
 }
@@ -388,7 +389,7 @@ h3 {
   max-width:46ch
 }
 .setup {
-  background:#eaf0e1;
+  background:var(--soft);
   border-radius:18px;
   padding:3rem;
   display:grid;
@@ -406,7 +407,7 @@ h3 {
 }
 .setup-steps li {
   padding:1.1rem 0;
-  border-bottom:1px solid #d4dec9;
+  border-bottom:1px solid var(--line);
   font-size:.8rem;
   display:flex;
   gap:1.2rem
@@ -471,9 +472,9 @@ footer>div {
 textarea {
   width:100%;
   min-height:140px;
-  background:#fffef9;
+  background:var(--surface);
   color:var(--ink);
-  border:1px solid #a6b59a;
+  border:1px solid var(--field-border);
   border-radius:8px;
   padding:1rem;
   font:inherit;
@@ -482,7 +483,7 @@ textarea {
 }
 button {
   background:var(--green);
-  color:white;
+  color:var(--on-accent);
   border:0;
   border-radius:8px;
   padding:.8rem 1rem;
@@ -664,9 +665,9 @@ footer {
 .guide-section ol { padding-left: 1.3rem; }
 .guide-section dt { font-weight: 600; font-size: .9rem; margin-top: 1.1rem; overflow-wrap: anywhere; }
 .guide-section dd { margin: .4rem 0 0; }
-.guide-note { background: #eaf0e1; border-left: 3px solid #7f9562; padding: 1rem 1.2rem; font-size: .85rem; margin-block: 1.4rem; }
+.guide-note { background: var(--soft); border-left: 3px solid var(--accent); padding: 1rem 1.2rem; font-size: .85rem; margin-block: 1.4rem; }
 code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .85em; overflow-wrap: anywhere; }
-pre { max-width: 100%; overflow-x: auto; background: #edf0e7; border: 1px solid var(--line); border-radius: 10px; padding: 1.2rem; line-height: 1.8; }
+pre { max-width: 100%; overflow-x: auto; background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 1.2rem; line-height: 1.8; }
 pre code { font-size: .75rem; overflow-wrap: normal; }
 .nav-links [aria-current="page"] { text-decoration: underline; }
 @media (max-width: 760px) {
@@ -679,8 +680,8 @@ pre code { font-size: .75rem; overflow-wrap: normal; }
 }
 
 /* Private-server navigation uses the same local document and button styles. */
-.connection-panel { background:#eaf0e1; border:1px solid var(--line); border-radius:14px; padding:1.5rem; margin-block:2rem; }
-.connection-panel input { display:block; width:100%; background:#fffef9; color:var(--ink); border:1px solid #a6b59a; border-radius:8px; padding:.9rem; font:inherit; font-size:.9rem; }
+.connection-panel { background:var(--soft); border:1px solid var(--line); border-radius:14px; padding:1.5rem; margin-block:2rem; }
+.connection-panel input { display:block; width:100%; background:var(--surface); color:var(--ink); border:1px solid var(--field-border); border-radius:8px; padding:.9rem; font:inherit; font-size:.9rem; }
 .connection-panel .actions { margin-block:1.2rem 0; gap:.8rem; }
 .connection-panel #status { font-size:.85rem; overflow-wrap:anywhere; margin-block:1rem 0; }
 button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
@@ -689,4 +690,46 @@ button:disabled { opacity:.55; cursor:not-allowed; transform:none; }
 .connection-panel .secondary-button { background:transparent; color:var(--green); border:1px solid var(--green); }
 @media(max-width:650px) {
   header>nav,.nav-links { flex-wrap:wrap; }
+}
+
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --paper:#111b17;
+  --ink:#e6eee7;
+  --muted:#a7b8ab;
+  --green:#91d5a8;
+  --line:#32463a;
+  --surface:#1a2921;
+  --soft:#21362a;
+  --accent:#98cfa5;
+  --hover:#afe5bf;
+  --on-accent:#11271a;
+  --field-border:#66806c;
+  --glow:#294c35;
+  --shadow:#00000030;
+}
+.nav-links { flex-wrap:wrap; }
+.theme-toggle {
+  display:none;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  width:44px;
+  height:44px;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:var(--surface);
+  color:var(--ink);
+}
+:root[data-theme] .theme-toggle { display:inline-flex; }
+.theme-toggle:hover { background:var(--soft); transform:none; }
+.theme-toggle img { width:19px; height:19px; }
+.theme-toggle .sun-icon { display:none; }
+[data-theme="dark"] .theme-toggle .moon-icon { display:none; }
+[data-theme="dark"] .theme-toggle .sun-icon { display:block; }
+[data-theme="dark"] .theme-toggle img { filter:invert(1); }
+@media(max-width:650px) {
+  header>nav { gap:.8rem; }
+  .nav-links { gap:.8rem; }
 }

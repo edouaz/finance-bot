@@ -6,15 +6,16 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; connect-src 'none'; img-src 'self'">
   <meta name="description" content="A self-hosted finance MCP server for ChatGPT. Explore bank accounts, spending and recurring payments with read-only tools and encrypted local storage.">
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <title>Installation guide — Finance Tracker</title>
 </head><body><a class="skip" href="#main">Skip to content</a>
 <header>
 <nav aria-label="Main navigation">
-  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">f.</span>finance tracker<span class="project-label"> / personal project</span></a>
+  <a class="brand" href="index.html"><img class="brand-mark" src="favicon.svg" alt="" width="36" height="36">Finance Tracker<span class="project-label"> / personal project</span></a>
   <div class="nav-links"><a href="index.html#how-it-works">How it works</a><a href="installation.html" aria-current="page">Setup guide <span aria-hidden="true">↗</span></a>
-</div>
+<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false" title="Switch to dark theme"><img class="moon-icon" src="moon.svg" alt="" width="19" height="19"><img class="sun-icon" src="sun.svg" alt="" width="19" height="19"></button></div>
 </nav>
 </header>
 <main id="main" class="guide">
@@ -187,7 +188,7 @@ python3 -m http.server 8000 --directory public</code>
 </article>
 </div>
 </main>
-<footer><a class="brand" href="index.html">finance tracker<span aria-hidden="true">.</span></a>
+<footer><a class="brand" href="index.html"><img class="brand-mark" src="favicon.svg" alt="" width="36" height="36">Finance Tracker</a>
 <p>A little more clarity, at your own pace.</p>
 <div><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://github.com/edouaz/finance-bot">GitHub ↗</a>
 </div>
